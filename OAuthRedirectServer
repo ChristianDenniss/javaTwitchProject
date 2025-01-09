@@ -1,0 +1,43 @@
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+import java.net.InetSocketAddress;
+import java.io.IOException;
+import java.io.OutputStream;
+
+public class OAuthRedirectServer
+{
+    public static void main(String[] args) throws Exception
+    {
+        // Create a simple HTTP server on port 8080
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        
+        // Create a handler for the OAuth redirect
+        server.createContext("/", new HttpHandler() {
+            @Override
+            public void handle(HttpExchange exchange) throws IOException {
+                String query = exchange.getRequestURI().getQuery();
+                
+                // Look for the "code" in the query string
+                String code = null;
+                if (query != null && query.contains("code=")) {
+                    code = query.split("code=")[1];
+                }
+                
+                // Respond with a simple message indicating that the code was received
+                String response = "Authorization code received: " + code;
+                exchange.sendResponseHeaders(200, response.getBytes().length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+                
+                // You can now use the "code" to exchange for an OAuth token
+                System.out.println("Received code: " + code);
+            }
+        });
+        
+        // Start the server
+        server.start();
+        System.out.println("Server is listening on port 8080...");
+    }
+}
