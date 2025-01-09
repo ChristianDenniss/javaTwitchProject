@@ -1,1 +1,98 @@
+import javafx.animation.FadeTransition;
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
+public class GameUI extends Application
+{
+    private ImageView backgroundImageView;
+    private Text title;
+
+    @Override
+    public void start(Stage primaryStage)
+    {
+        // Root layout
+        StackPane root = new StackPane();
+
+        // Initial background image setup
+        Image initialBackgroundImage = new Image("file:resources/backdrop.jpg"); // Adjust the path as needed
+        backgroundImageView = new ImageView(initialBackgroundImage);
+        backgroundImageView.setPreserveRatio(false); // Stretch to fit
+        backgroundImageView.setFitWidth(800); // Adjust dynamically to the scene width
+        backgroundImageView.setFitHeight(600); // Adjust dynamically to the scene height
+
+        // Game title setup
+        title = new Text("JAVA-MON");
+        title.setFont(Font.font("Arial", 48)); // Large font size
+        title.setStyle("-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;"); // Add white text with black outline
+
+        // Twitch logo image setup (100x100)
+        Image twitchLogo = new Image("file:resources/twitchLogo.jpg");
+        ImageView twitchLogoView = new ImageView(twitchLogo);
+        twitchLogoView.setFitWidth(100); // Resize to 100x100
+        twitchLogoView.setFitHeight(100);
+
+        // Play button setup
+        Button playButton = new Button("Play");
+        playButton.setStyle("-fx-font-size: 18px; -fx-padding: 10 20;"); // Larger font and padding
+        playButton.setOnAction(e -> handlePlayButtonClick(playButton));
+
+        // Layout setup
+        root.getChildren().addAll(backgroundImageView, title, playButton, twitchLogoView);
+        StackPane.setAlignment(title, Pos.CENTER);
+        StackPane.setAlignment(playButton, Pos.BOTTOM_CENTER);
+        StackPane.setAlignment(twitchLogoView, Pos.BOTTOM_LEFT);
+
+        // Add padding to raise the title slightly above center
+        StackPane.setMargin(title, new Insets(-100, 0, 0, 0)); // Adjust top margin to position the title
+        StackPane.setMargin(playButton, new Insets(0, 0, 50, 0)); // Adjust bottom margin to raise the button
+
+        Scene scene = new Scene(root, 800, 600);
+
+        // Dynamically resize backdrop image to fit the window
+        scene.widthProperty().addListener((obs, oldVal, newVal) -> backgroundImageView.setFitWidth(scene.getWidth()));
+        scene.heightProperty().addListener((obs, oldVal, newVal) -> backgroundImageView.setFitHeight(scene.getHeight()));
+
+        primaryStage.setTitle("Java-Mon");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void handlePlayButtonClick(Button playButton)
+    {
+        // Disable the play button
+        playButton.setDisable(true);
+
+        // Fade out the play button
+        FadeTransition fadePlayButton = new FadeTransition(Duration.seconds(1), playButton);
+        fadePlayButton.setFromValue(1.0);
+        fadePlayButton.setToValue(0.0);
+        fadePlayButton.setOnFinished(event -> playButton.setVisible(false)); // Hide after fade out
+        fadePlayButton.play();
+
+        // Fade out the title
+        FadeTransition fadeTitle = new FadeTransition(Duration.seconds(1), title);
+        fadeTitle.setFromValue(1.0);
+        fadeTitle.setToValue(0.0);
+        fadeTitle.setOnFinished(event -> title.setVisible(false)); // Hide after fade out
+        fadeTitle.play();
+
+        // Change the background image
+        Image newBackgroundImage = new Image("file:resources/battle.jpg"); // Adjust the path as needed
+        backgroundImageView.setImage(newBackgroundImage);
+    }
+
+    public static void main(String[] args)
+    {
+        launch(args);
+    }
+}
