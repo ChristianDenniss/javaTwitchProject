@@ -27,7 +27,7 @@ public class TwitchChatProcessor extends Application
 
     private static final String SERVER = "irc.chat.twitch.tv"; // Twitch IRC server
     private static final int PORT = 6667; // IRC port
-    private static final String OAUTH_TOKEN = "oauth:c3xr5w8x70tzgvy3ko8lb8lm9f0v8m"; // Replace with your OAuth token
+    private static final String OAUTH_TOKEN = "oauth:tl6bdny09izlosumepay16qll00xci"; // Replace with your OAuth token
     private static final String NICKNAME = "lopgop123"; // Replace with your username
     private static final String CHANNEL = "#lopgop123"; // Replace with the channel name you wish to connect to
 
