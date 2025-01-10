@@ -3,9 +3,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -13,6 +14,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.scene.paint.Color;
+import java.util.concurrent.*;
 
 public class TwitchChatProcessor extends Application
 {
@@ -40,18 +43,27 @@ public class TwitchChatProcessor extends Application
     public void start(Stage primaryStage)
     {
         VBox layout = new VBox(LAYOUT_SPACING);
+        layout.setStyle("-fx-alignment: center;");  // Centers the content
         Label resultLabel = new Label("Press start to begin processing messages.");
-        Label countLabel = new Label("Message Counts: 1: 0, 2: 0, 3: 0, 4: 0"); // Real-time count display
+        Label countLabel1 = new Label("Message 1: 0");
+        Label countLabel2 = new Label("Message 2: 0");
+        Label countLabel3 = new Label("Message 3: 0");
+        Label countLabel4 = new Label("Message 4: 0");
+        Label countdownLabel = new Label("Time Left: 0");
         Button startButton = new Button("Start Entry Period");
 
         startButton.setOnAction(event -> 
         {
             resultLabel.setText("Entry period active. Listening for messages...");
-            countLabel.setText("Message Counts: 1: 0, 2: 0, 3: 0, 4: 0"); // Reset counts display
-            startEntryPeriod(15, resultLabel, countLabel); // Start 15 seconds entry period
+            countLabel1.setText("Message 1: 0");
+            countLabel2.setText("Message 2: 0");
+            countLabel3.setText("Message 3: 0");
+            countLabel4.setText("Message 4: 0");
+            countdownLabel.setText("Time Left: 15");
+            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel); 
         });
 
-        layout.getChildren().addAll(startButton, resultLabel, countLabel);
+        layout.getChildren().addAll(startButton, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel);
         Scene scene = new Scene(layout, 400, 200);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Twitch Chat Processor");
@@ -114,40 +126,54 @@ public class TwitchChatProcessor extends Application
         return (messageIndex != -1) ? rawLine.substring(messageIndex + 2) : "";
     }
 
-    private void startEntryPeriod(int seconds, Label resultLabel, Label countLabel)
+    private void startEntryPeriod(int seconds, Label resultLabel, Label countLabel1, Label countLabel2, Label countLabel3, Label countLabel4, Label countdownLabel)
     {
         messageCounts = new int[4]; // Reset counts
         isEntryPeriodActive = true;
-
+        final int[] countdown = {seconds}; // Countdown variable, initialized with the provided seconds
+    
         executor.schedule(() -> 
         {
             isEntryPeriodActive = false;
             Platform.runLater(() -> 
             {
-                int result = determineMostFrequentMessage();
-                if (result == -1) 
-                {
-                    resultLabel.setText("No messages received during the entry period.");
-                } 
-                else 
-                {
-                    resultLabel.setText("Entry period over. Most frequent message: " + result);
-                }
+                String result = determineMostFrequentMessage(countLabel1, countLabel2, countLabel3, countLabel4);
+                resultLabel.setText("Entry period over. " + result);
             });
         }, seconds, TimeUnit.SECONDS);
-
+    
         executor.scheduleAtFixedRate(() -> 
         {
             if (isEntryPeriodActive) 
             {
                 Platform.runLater(() -> 
                 {
-                    countLabel.setText("Message Counts: 1: " + messageCounts[0] +
-                            ", 2: " + messageCounts[1] + ", 3: " + messageCounts[2] + ", 4: " + messageCounts[3]);
+                    countLabel1.setText("Message 1: " + messageCounts[0]);
+                    countLabel2.setText("Message 2: " + messageCounts[1]);
+                    countLabel3.setText("Message 3: " + messageCounts[2]);
+                    countLabel4.setText("Message 4: " + messageCounts[3]);
                 });
             }
         }, 0, 1, TimeUnit.SECONDS); // Update every second
+    
+        // Countdown update, decrementing the countdown variable
+        executor.scheduleAtFixedRate(() -> 
+        {
+            if (isEntryPeriodActive && countdown[0] > 0) 
+            {
+                Platform.runLater(() -> 
+                {
+                    countdownLabel.setText("Time Left: " + countdown[0]);
+                    countdown[0]--; // Decrement countdown each second
+                });
+            }
+            else if (countdown[0] == 0)
+            {
+                Platform.runLater(() -> countdownLabel.setText("Time Left: 0"));
+            }
+        }, 0, 1, TimeUnit.SECONDS); // Update every second
     }
+
 
     public void processMessage(String message)
     {
@@ -156,26 +182,64 @@ public class TwitchChatProcessor extends Application
         if ("1".equals(message) || "2".equals(message) || "3".equals(message) || "4".equals(message)) 
         {
             int value = Integer.parseInt(message);
-            //we cant use value directly because the 0 index so we do value -1 and increment its count
-            messageCounts[value-1]++; 
+            // We can't use value directly because of the 0 index, so we do value - 1 and increment its count
+            messageCounts[value - 1]++;
         }
     }
 
-    private int determineMostFrequentMessage()
+    private String determineMostFrequentMessage(Label countLabel1, Label countLabel2, Label countLabel3, Label countLabel4)
     {
-        int mostFrequent = 0;
-        int maxCount = 0;
+        // Create a list of message counts along with their indices
+        List<MessageCount> counts = new ArrayList<>();
+        counts.add(new MessageCount(1, messageCounts[0], countLabel1));
+        counts.add(new MessageCount(2, messageCounts[1], countLabel2));
+        counts.add(new MessageCount(3, messageCounts[2], countLabel3));
+        counts.add(new MessageCount(4, messageCounts[3], countLabel4));
 
-        for (int i = 0; i < 4; i++) 
+        // Sort the counts in descending order
+        counts.sort(Comparator.comparingInt(MessageCount::getCount).reversed());
+
+        // Apply colors based on ranking
+        for (int i = 0; i < counts.size(); i++) 
         {
-            if (messageCounts[i] > maxCount) 
-            {
-                mostFrequent = i+1;
-                maxCount = messageCounts[i];
-            }
+            MessageCount count = counts.get(i);
+            String color = getColorForRank(i + 1, count.getCount());
+            Platform.runLater(() -> count.getLabel().setStyle(color));
         }
 
-        // If no messages were counted (max count=0) return -1 to indicate no messages received, else max count != to 0, return mostFrequent, this is a faster way to write it
-        return maxCount == 0 ? -1 : mostFrequent;
+        return "Entry period over.";
+    }
+
+    private String getColorForRank(int rank, int count)
+    {
+        if (count == 0) return "-fx-text-fill: black";  // Black if no messages
+
+        switch (rank) 
+        {
+            case 1: return "-fx-text-fill: #FFD700";  // Gold color
+            case 2: return "-fx-text-fill: #C0C0C0";  // Silver color
+            case 3: return "-fx-text-fill: #CD7F32";  // Bronze color
+            case 4: return "-fx-text-fill: black";    // Black color for the last one
+            default: return "-fx-text-fill: black";  // Default case
+        }
+    }
+
+    // Helper class to hold message, count, and label reference
+    private static class MessageCount
+    {
+        private final int message;
+        private final int count;
+        private final Label label;
+
+        public MessageCount(int message, int count, Label label)
+        {
+            this.message = message;
+            this.count = count;
+            this.label = label;
+        }
+
+        public int getMessage() { return message; }
+        public int getCount() { return count; }
+        public Label getLabel() { return label; }
     }
 }
