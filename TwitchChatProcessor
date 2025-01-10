@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
@@ -32,7 +33,8 @@ public class TwitchChatProcessor extends Application
     private static final int PORT = 6667; // IRC port
     private static final String OAUTH_TOKEN = "oauth:tl6bdny09izlosumepay16qll00xci"; // Replace with your OAuth token
     private static final String NICKNAME = "lopgop123"; // Replace with your username
-    private static final String CHANNEL = "#lopgop123"; // Replace with the channel name you wish to connect to
+
+    private String channel = "Username Here!"; // Default channel
 
     public static void main(String[] args)
     {
@@ -40,38 +42,42 @@ public class TwitchChatProcessor extends Application
     }
 
     @Override
-    public void start(Stage primaryStage)
+public void start(Stage primaryStage)
+{
+    VBox layout = new VBox(LAYOUT_SPACING);
+    layout.setStyle("-fx-alignment: center;");  // Centers the content
+
+    Label resultLabel = new Label("Press start to begin processing messages.");
+    Label countLabel1 = new Label("Message 1: 0");
+    Label countLabel2 = new Label("Message 2: 0");
+    Label countLabel3 = new Label("Message 3: 0");
+    Label countLabel4 = new Label("Message 4: 0");
+    Label countdownLabel = new Label("Time Left: 0");
+    Button startButton = new Button("Start Entry Period");
+    TextField channelField = new TextField(channel); // TextField for channel input
+    channelField.setPromptText("Enter Channel Name");
+
+    startButton.setOnAction(event -> 
     {
-        VBox layout = new VBox(LAYOUT_SPACING);
-        layout.setStyle("-fx-alignment: center;");  // Centers the content
-        Label resultLabel = new Label("Press start to begin processing messages.");
-        Label countLabel1 = new Label("Message 1: 0");
-        Label countLabel2 = new Label("Message 2: 0");
-        Label countLabel3 = new Label("Message 3: 0");
-        Label countLabel4 = new Label("Message 4: 0");
-        Label countdownLabel = new Label("Time Left: 0");
-        Button startButton = new Button("Start Entry Period");
+        channel = "#" + channelField.getText(); // Get the channel name entered by the user
+        resultLabel.setText("Entry period active. Listening for messages...");
+        countLabel1.setText("Message 1: 0");
+        countLabel2.setText("Message 2: 0");
+        countLabel3.setText("Message 3: 0");
+        countLabel4.setText("Message 4: 0");
+        countdownLabel.setText("Time Left: 15");
+        startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel); 
+        initializeTwitchClient(); // Initialize connection to the new channel
+    });
 
-        startButton.setOnAction(event -> 
-        {
-            resultLabel.setText("Entry period active. Listening for messages...");
-            countLabel1.setText("Message 1: 0");
-            countLabel2.setText("Message 2: 0");
-            countLabel3.setText("Message 3: 0");
-            countLabel4.setText("Message 4: 0");
-            countdownLabel.setText("Time Left: 15");
-            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel); 
-        });
-
-        layout.getChildren().addAll(startButton, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel);
-        Scene scene = new Scene(layout, 400, 200);
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Twitch Chat Processor");
-        primaryStage.show();
-
-        // Initialize Twitch IRC connection
-        initializeTwitchClient();
-    }
+    // Add the prompt label and the other components to the layout
+    layout.getChildren().addAll(channelField, startButton, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel);
+    
+    Scene scene = new Scene(layout, 400, 250);
+    primaryStage.setScene(scene);
+    primaryStage.setTitle("Twitch Chat Processor");
+    primaryStage.show();
+}
 
     private void initializeTwitchClient()
     {
@@ -84,7 +90,7 @@ public class TwitchChatProcessor extends Application
             // Authenticate and join channel
             out.println("PASS " + OAUTH_TOKEN);
             out.println("NICK " + NICKNAME);
-            out.println("JOIN " + CHANNEL);
+            out.println("JOIN " + channel); // Use the user-entered channel
 
             // Start listening for messages
             new Thread(this::listenForMessages).start();
@@ -131,17 +137,20 @@ public class TwitchChatProcessor extends Application
         messageCounts = new int[4]; // Reset counts
         isEntryPeriodActive = true;
         final int[] countdown = {seconds}; // Countdown variable, initialized with the provided seconds
-    
+        
         executor.schedule(() -> 
         {
             isEntryPeriodActive = false;
             Platform.runLater(() -> 
             {
-                String result = determineMostFrequentMessage(countLabel1, countLabel2, countLabel3, countLabel4);
-                resultLabel.setText("Entry period over. " + result);
+                // Call determineMostFrequentMessage and get the most frequent count as an integer
+                int mostFrequentCount = determineMostFrequentMessage(countLabel1, countLabel2, countLabel3, countLabel4);
+    
+                // Set the resultLabel with a string message and include the most frequent count
+                resultLabel.setText("Entry period over. Most frequent message count: " + mostFrequentCount);
             });
         }, seconds, TimeUnit.SECONDS);
-    
+        
         executor.scheduleAtFixedRate(() -> 
         {
             if (isEntryPeriodActive) 
@@ -155,7 +164,7 @@ public class TwitchChatProcessor extends Application
                 });
             }
         }, 0, 1, TimeUnit.SECONDS); // Update every second
-    
+        
         // Countdown update, decrementing the countdown variable
         executor.scheduleAtFixedRate(() -> 
         {
@@ -187,7 +196,7 @@ public class TwitchChatProcessor extends Application
         }
     }
 
-    private String determineMostFrequentMessage(Label countLabel1, Label countLabel2, Label countLabel3, Label countLabel4)
+    private int determineMostFrequentMessage(Label countLabel1, Label countLabel2, Label countLabel3, Label countLabel4)
     {
         // Create a list of message counts along with their indices
         List<MessageCount> counts = new ArrayList<>();
@@ -195,10 +204,10 @@ public class TwitchChatProcessor extends Application
         counts.add(new MessageCount(2, messageCounts[1], countLabel2));
         counts.add(new MessageCount(3, messageCounts[2], countLabel3));
         counts.add(new MessageCount(4, messageCounts[3], countLabel4));
-
-        // Sort the counts in descending order
+    
+        // Sort the counts in descending order based on the message count
         counts.sort(Comparator.comparingInt(MessageCount::getCount).reversed());
-
+    
         // Apply colors based on ranking
         for (int i = 0; i < counts.size(); i++) 
         {
@@ -206,9 +215,11 @@ public class TwitchChatProcessor extends Application
             String color = getColorForRank(i + 1, count.getCount());
             Platform.runLater(() -> count.getLabel().setStyle(color));
         }
-
-        return "Entry period over.";
+    
+        // Return the highest message count
+        return counts.get(0).getCount(); // Return the highest count value
     }
+
 
     private String getColorForRank(int rank, int count)
     {
