@@ -13,14 +13,17 @@ public class OAuthRedirectServer
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         
         // Create a handler for the OAuth redirect
-        server.createContext("/", new HttpHandler() {
+        server.createContext("/", new HttpHandler() 
+        {
             @Override
-            public void handle(HttpExchange exchange) throws IOException {
+            public void handle(HttpExchange exchange) throws IOException 
+            {
                 String query = exchange.getRequestURI().getQuery();
                 
                 // Look for the "code" in the query string
                 String code = null;
-                if (query != null && query.contains("code=")) {
+                if (query != null && query.contains("code=")) 
+                {
                     code = query.split("code=")[1];
                 }
                 
