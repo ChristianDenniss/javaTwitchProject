@@ -1,3 +1,6 @@
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,93 +16,56 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
-public class GameUI extends Application {
+public class GameUI extends Application
+{
     private ImageView backgroundImageView;
     private Text title;
     private StackPane root;
     private VBox buttonBox;
     private Button creditsButton;
-    private Button backButton; // For the back button
+    private Button backButton;
 
     @Override
-    public void start(Stage primaryStage) {
-        // Root layout
+    public void start(Stage primaryStage)
+    {
         root = new StackPane();
 
-        // Initial background image setup
-        Image initialBackgroundImage = new Image("file:resources/backdrop.jpg"); // Adjust the path as needed
+        Image initialBackgroundImage = new Image("file:resources/backdrop.jpg");
         backgroundImageView = new ImageView(initialBackgroundImage);
-        backgroundImageView.setPreserveRatio(false); // Stretch to fit
-        backgroundImageView.setFitWidth(800); // Adjust dynamically to the scene width
-        backgroundImageView.setFitHeight(600); // Adjust dynamically to the scene height
+        backgroundImageView.setPreserveRatio(false);
+        backgroundImageView.setFitWidth(800);
+        backgroundImageView.setFitHeight(600);
 
-        // Game title setup
-        title = new Text("JAVA-MON");
-        title.setFont(Font.font("Arial", 48)); // Large font size
-        title.setStyle("-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;"); // Add white text with black outline
+        title = new Text("TitlePlaceHolder");
+        title.setFont(Font.font("Arial", 48));
+        title.setStyle("-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;");
 
-        // Play button setup (smaller and less tall)
-        Button playButton = new Button("Play");
-        playButton.setStyle(
-                "-fx-font-size: 30px; " +
-                        "-fx-padding: 10 20; " +
-                        "-fx-background-color: #007bff; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-border-radius: 10px; " +
-                        "-fx-background-radius: 10px; " +
-                        "-fx-border: 2px solid #0056b3; " +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);"
-        );
+        // Adding a smoother, controlled floaty effect to the title
+        addSmoothFloatyEffectToTitle();
 
-        // Credits button setup (smaller)
-        creditsButton = new Button("Credits");
-        creditsButton.setStyle(
-                "-fx-font-size: 30px; " +
-                        "-fx-padding: 10 20; " +
-                        "-fx-background-color: #28a745; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-border-radius: 10px; " +
-                        "-fx-background-radius: 10px; " +
-                        "-fx-border: 2px solid #1c7430; " +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);"
-        );
+        Button playButton = createStyledButton("Play", "#007bff", "#0056b3");
+        creditsButton = createStyledButton("Credits", "#28a745", "#1c7430");
+        Button wipButton = createStyledButton("WIP", "#ffc107", "#e0a800");
 
-        // WIP button setup (smaller)
-        Button wipButton = new Button("WIP");
-        wipButton.setStyle(
-                "-fx-font-size: 30px; " +
-                        "-fx-padding: 10 20; " +
-                        "-fx-background-color: #ffc107; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-border-radius: 10px; " +
-                        "-fx-background-radius: 10px; " +
-                        "-fx-border: 2px solid #e0a800; " +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);"
-        );
-
-        // Hover effect with scaling for all buttons (Play, Credits, WIP)
         setButtonHoverEffect(playButton, "#0056b3");
         setButtonHoverEffect(creditsButton, "#218838");
         setButtonHoverEffect(wipButton, "#e0a800");
 
-        // Create VBox to stack the buttons vertically like a ladder
-        buttonBox = new VBox(10); // Vertical layout with 10px spacing between buttons
-        buttonBox.setAlignment(Pos.CENTER); // Center align the buttons
-        buttonBox.getChildren().addAll(playButton, creditsButton, wipButton); // Add buttons to VBox
+        buttonBox = new VBox(10);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.getChildren().addAll(playButton, creditsButton, wipButton);
 
-        // Layout setup
         root.getChildren().addAll(backgroundImageView, title, buttonBox);
-        StackPane.setAlignment(title, Pos.TOP_CENTER); // Title at the top center
-        StackPane.setAlignment(buttonBox, Pos.CENTER); // Button box centered
+        StackPane.setAlignment(title, Pos.TOP_CENTER);
+        StackPane.setAlignment(buttonBox, Pos.CENTER);
 
-        // Set the margin for proper spacing
-        StackPane.setMargin(title, new Insets(100, 0, 0, 0));  // Margin at the top to space the title
-        StackPane.setMargin(buttonBox, new Insets(150, 0, 0, 0)); // Lower the button stack
+        StackPane.setMargin(title, new Insets(100, 0, 0, 0));
+        StackPane.setMargin(buttonBox, new Insets(150, 0, 0, 0));
 
         Scene scene = new Scene(root, 800, 600);
 
-        // Dynamically resize backdrop image to fit the window
         scene.widthProperty().addListener((obs, oldVal, newVal) -> backgroundImageView.setFitWidth(scene.getWidth()));
         scene.heightProperty().addListener((obs, oldVal, newVal) -> backgroundImageView.setFitHeight(scene.getHeight()));
 
@@ -107,122 +73,136 @@ public class GameUI extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Handle button clicks (all buttons do the same action)
         playButton.setOnAction(e -> changeScreen(playButton, root, null));
         creditsButton.setOnAction(e -> changeScreen(creditsButton, root, "Credits"));
-        wipButton.setOnAction(e -> changeScreen(wipButton, root, null));
+        wipButton.setOnAction(e -> changeScreen(wipButton, root, "WIP"));
     }
 
-    private void setButtonHoverEffect(Button button, String hoverColor) {
-        button.setOnMouseEntered(e -> {
-            button.setStyle(
-                    "-fx-font-size: 30px; " +
-                            "-fx-padding: 10 20; " +
-                            "-fx-background-color: " + hoverColor + "; " +
-                            "-fx-text-fill: white; " +
-                            "-fx-border-radius: 10px; " +
-                            "-fx-background-radius: 10px; " +
-                            "-fx-border: 2px solid #003366; " +
-                            "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);"
-            );
-        });
-
-        button.setOnMouseExited(e -> {
-            button.setStyle(
-                    "-fx-font-size: 30px; " +
-                            "-fx-padding: 10 20; " +
-                            "-fx-background-color: #007bff; " +
-                            "-fx-text-fill: white; " +
-                            "-fx-border-radius: 10px; " +
-                            "-fx-background-radius: 10px; " +
-                            "-fx-border: 2px solid #0056b3; " +
-                            "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);"
-            );
-        });
+    private Button createStyledButton(String text, String bgColor, String borderColor)
+    {
+        Button button = new Button(text);
+        button.setStyle(String.format(
+                "-fx-font-size: 30px; " +
+                        "-fx-padding: 10 20; " +
+                        "-fx-background-color: %s; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 10px; " +
+                        "-fx-border: 2px solid %s; " +
+                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);",
+                bgColor, borderColor));
+        return button;
     }
 
-    private void changeScreen(Button button, StackPane root, String buttonType) {
-        // Disable and hide the title and buttons
+    private void setButtonHoverEffect(Button button, String hoverColor)
+    {
+        button.setOnMouseEntered(e -> button.setStyle(button.getStyle().replaceFirst("-fx-background-color: #[a-fA-F0-9]{6};", "-fx-background-color: " + hoverColor + ";")));
+        button.setOnMouseExited(e -> button.setStyle(button.getStyle().replaceFirst("-fx-background-color: #[a-fA-F0-9]{6};", "-fx-background-color: #007bff;")));
+    }
+
+    private void addSmoothFloatyEffectToTitle()
+    {
+        // Define the floating and scaling effect for the title
+        Timeline timeline = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(title.translateYProperty(), 0),
+                new KeyValue(title.scaleXProperty(), 1),
+                new KeyValue(title.scaleYProperty(), 1),
+                new KeyValue(title.rotateProperty(), 0)
+            ),
+            new KeyFrame(Duration.seconds(2),
+                new KeyValue(title.translateYProperty(), -20),  // Move up
+                new KeyValue(title.scaleXProperty(), 1.1),    // Slightly grow
+                new KeyValue(title.scaleYProperty(), 1.1),
+                new KeyValue(title.rotateProperty(), 10)       // Small rotation
+            ),
+            new KeyFrame(Duration.seconds(4),
+                new KeyValue(title.translateYProperty(), 0),   // Move down to original position
+                new KeyValue(title.scaleXProperty(), 1),       // Reset scale
+                new KeyValue(title.scaleYProperty(), 1),
+                new KeyValue(title.rotateProperty(), 0)        // Reset rotation
+            )
+        );
+
+        timeline.setCycleCount(Timeline.INDEFINITE);  // Loop the animation forever
+        timeline.setAutoReverse(true);  // Makes the animation go back and forth
+        timeline.play();  // Start the animation
+    }
+
+    private void changeScreen(Button button, StackPane root, String buttonType)
+    {
+        // Hide background image temporarily
+        backgroundImageView.setVisible(false);
+
         title.setVisible(false);
         title.setDisable(true);
-        button.setVisible(false);
-        button.setDisable(true);
-        buttonBox.setVisible(false); // Hide the buttonBox (which contains all buttons)
-        buttonBox.setDisable(true);  // Disable the button box to prevent any interaction
+        buttonBox.setVisible(false);
+        buttonBox.setDisable(true);
 
-        // Video file path (transScreen)
-        String videoFilePath = "file:/resources/transScreen.mp4"; // Adjust path if needed
+        String videoFilePath = "file:/resources/transScreen.mp4";
 
-        // Create Media and MediaPlayer
         Media media = new Media(videoFilePath);
         MediaPlayer mediaPlayer = new MediaPlayer(media);
-
-        // Create a MediaView to display the video
         MediaView mediaView = new MediaView(mediaPlayer);
-        mediaView.setPreserveRatio(false); // Turn off aspect ratio to stretch the video
-        mediaView.setFitWidth(800);  // Fit video width to window
-        mediaView.setFitHeight(600); // Fit video height to window
+        mediaView.setPreserveRatio(false);
+        mediaView.setFitWidth(800);
+        mediaView.setFitHeight(600);
 
-        // Add the MediaView to the root layout
         root.getChildren().add(mediaView);
 
-        // Start the video
         mediaPlayer.play();
 
-        // Resize video dynamically with the scene while stretching it to the window
         Scene scene = button.getScene();
         scene.widthProperty().addListener((obs, oldVal, newVal) -> mediaView.setFitWidth(newVal.doubleValue()));
         scene.heightProperty().addListener((obs, oldVal, newVal) -> mediaView.setFitHeight(newVal.doubleValue()));
 
-        // When the video ends, change the background and create the "Back" button
-        mediaPlayer.setOnEndOfMedia(() -> {
-            mediaView.setVisible(false); // Hide the video
-            if (buttonType != null && buttonType.equals("Credits")) {
-                createBackButton(root);
+        mediaPlayer.setOnEndOfMedia(() ->
+        {
+            root.getChildren().remove(mediaView);
+
+            // Change the background image to black.jpg after the video transition finishes
+            if ("Credits".equals(buttonType) || "WIP".equals(buttonType))
+            {
+                backgroundImageView.setImage(new Image("file:resources/black.jpg"));
+                backgroundImageView.setVisible(true); // Now show the updated background
+                createBackButton(root); // Keep the back button for "Credits" and "WIP"
+            }
+            else
+            {
+                resetScreen(root); // Reset to the initial screen for the play button
             }
         });
     }
 
-    private void createBackButton(StackPane root) {
-        // Create the "Back" button
-        backButton = new Button("Back");
-        backButton.setStyle(
-                "-fx-font-size: 20px; " +
-                        "-fx-padding: 10 20; " +
-                        "-fx-background-color: #dc3545; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-border-radius: 10px; " +
-                        "-fx-background-radius: 10px; " +
-                        "-fx-border: 2px solid #c82333; " +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);"
-        );
+    private void createBackButton(StackPane root)
+    {
+        backButton = createStyledButton("Back", "#dc3545", "#c82333");
 
-        // Position the back button slightly off the top-left corner
         StackPane.setAlignment(backButton, Pos.TOP_LEFT);
-        StackPane.setMargin(backButton, new Insets(30, 0, 0, 30)); // Margin from top-left corner
+        StackPane.setMargin(backButton, new Insets(30, 0, 0, 30));
 
-        // Add the back button to root
         root.getChildren().add(backButton);
 
-        // When the "Back" button is pressed, return to the starting screen
-        backButton.setOnAction(e -> {
-            resetScreen(root);
-            root.getChildren().remove(backButton); // Remove the "Back" button after click
+        backButton.setOnAction(e ->
+        {
+            changeScreen(backButton, root, null); // Play transition
+            resetScreen(root); // Reset screen after transition
+            root.getChildren().remove(backButton);
         });
     }
 
-    private void resetScreen(StackPane root) {
-        // Reset the title and buttons to their original state
+    private void resetScreen(StackPane root)
+    {
         title.setVisible(true);
         title.setDisable(false);
-        buttonBox.setVisible(true); // Show the buttonBox (which contains all buttons)
-        buttonBox.setDisable(false); // Enable the buttonBox
-
-        // Reset the background image to the initial one
+        buttonBox.setVisible(true);
+        buttonBox.setDisable(false);
         backgroundImageView.setImage(new Image("file:resources/backdrop.jpg"));
+        backgroundImageView.setVisible(true); // Ensure the background is visible again
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         launch(args);
     }
 }
