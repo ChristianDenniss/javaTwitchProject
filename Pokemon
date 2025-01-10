@@ -23,7 +23,8 @@ public class Pokemon
         this.defense = defense;
     }
     
-    public void levelUp() {
+    public void levelUp() 
+    {
         this.level++;
         this.maxHP += 10; // Increase health with level
         this.attack += 5;  // Increase attack with level
@@ -75,4 +76,3 @@ public class Pokemon
 
     
 }
-
