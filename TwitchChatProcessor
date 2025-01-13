@@ -28,7 +28,8 @@ public class TwitchChatProcessor extends Application
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-
+    private Stage primaryStage; 
+    
     private static final String SERVER = "irc.chat.twitch.tv"; // Twitch IRC server
     private static final int PORT = 6667; // IRC port
     private static final String OAUTH_TOKEN = "oauth:tl6bdny09izlosumepay16qll00xci"; // Replace with your OAuth token
@@ -40,44 +41,89 @@ public class TwitchChatProcessor extends Application
     {
         launch(args);
     }
-
-    @Override
-public void start(Stage primaryStage)
-{
-    VBox layout = new VBox(LAYOUT_SPACING);
-    layout.setStyle("-fx-alignment: center;");  // Centers the content
-
-    Label resultLabel = new Label("Press start to begin processing messages.");
-    Label countLabel1 = new Label("Message 1: 0");
-    Label countLabel2 = new Label("Message 2: 0");
-    Label countLabel3 = new Label("Message 3: 0");
-    Label countLabel4 = new Label("Message 4: 0");
-    Label countdownLabel = new Label("Time Left: 0");
-    Button startButton = new Button("Start Entry Period");
-    TextField channelField = new TextField(channel); // TextField for channel input
-    channelField.setPromptText("Enter Channel Name");
-
-    startButton.setOnAction(event -> 
-    {
-        channel = "#" + channelField.getText(); // Get the channel name entered by the user
-        resultLabel.setText("Entry period active. Listening for messages...");
-        countLabel1.setText("Message 1: 0");
-        countLabel2.setText("Message 2: 0");
-        countLabel3.setText("Message 3: 0");
-        countLabel4.setText("Message 4: 0");
-        countdownLabel.setText("Time Left: 15");
-        startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel); 
-        initializeTwitchClient(); // Initialize connection to the new channel
-    });
-
-    // Add the prompt label and the other components to the layout
-    layout.getChildren().addAll(channelField, startButton, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel);
     
-    Scene scene = new Scene(layout, 400, 250);
-    primaryStage.setScene(scene);
-    primaryStage.setTitle("Twitch Chat Processor");
-    primaryStage.show();
-}
+    public void intitializeUI(String platform, String channel)
+    {
+        VBox layout = new VBox(LAYOUT_SPACING);
+        layout.setStyle("-fx-alignment: center;");  // Centers the content
+    
+        // Create the labels to display platform and channel
+        Label resultLabel = new Label("Platform: " + platform + "\nChannel: " + channel);
+        Label countLabel1 = new Label("Message 1: 0");
+        Label countLabel2 = new Label("Message 2: 0");
+        Label countLabel3 = new Label("Message 3: 0");
+        Label countLabel4 = new Label("Message 4: 0");
+        Label countdownLabel = new Label("Time Left: 0");
+        Button startButton = new Button("Start Entry Period");
+    
+        startButton.setOnAction(event -> 
+        {
+            resultLabel.setText("Entry period active. Listening for messages...");
+            countLabel1.setText("Message 1: 0");
+            countLabel2.setText("Message 2: 0");
+            countLabel3.setText("Message 3: 0");
+            countLabel4.setText("Message 4: 0");
+            countdownLabel.setText("Time Left: 15");
+            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel); 
+            initializeTwitchClient(); // Initialize connection to the new channel
+        });
+    
+        // Add the prompt label and the other components to the layout
+        layout.getChildren().addAll(resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
+    
+        // Check if primaryStage exists, otherwise create a new one
+        if (primaryStage == null) 
+        {
+            primaryStage = new Stage();  // Create a new stage if it's null
+        }
+        
+        // Set the scene for the existing or newly created stage
+        Scene scene = new Scene(layout, 400, 250);
+        primaryStage.setScene(scene); // Use the existing primaryStage or the newly created one
+        primaryStage.setTitle("Twitch Chat Processor");
+        primaryStage.show();
+    }
+
+
+    
+    @Override
+    public void start(Stage primaryStage)
+    {
+
+        VBox layout = new VBox(LAYOUT_SPACING);
+        layout.setStyle("-fx-alignment: center;");  // Centers the content
+    
+        Label resultLabel = new Label("Press start to begin processing messages.");
+        Label countLabel1 = new Label("Message 1: 0");
+        Label countLabel2 = new Label("Message 2: 0");
+        Label countLabel3 = new Label("Message 3: 0");
+        Label countLabel4 = new Label("Message 4: 0");
+        Label countdownLabel = new Label("Time Left: 0");
+        Button startButton = new Button("Start Entry Period");
+        TextField channelField = new TextField(channel); // TextField for channel input
+        channelField.setPromptText("Enter Channel Name");
+    
+        startButton.setOnAction(event -> 
+        {
+            channel = "#" + channelField.getText(); // Get the channel name entered by the user
+            resultLabel.setText("Entry period active. Listening for messages...");
+            countLabel1.setText("Message 1: 0");
+            countLabel2.setText("Message 2: 0");
+            countLabel3.setText("Message 3: 0");
+            countLabel4.setText("Message 4: 0");
+            countdownLabel.setText("Time Left: 15");
+            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel); 
+            initializeTwitchClient(); // Initialize connection to the new channel
+        });
+    
+        // Add the prompt label and the other components to the layout
+        layout.getChildren().addAll(channelField, startButton, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel);
+        
+        Scene scene = new Scene(layout, 400, 250);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Twitch Chat Processor");
+        primaryStage.show();
+    }
 
     private void initializeTwitchClient()
     {
