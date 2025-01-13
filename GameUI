@@ -17,6 +17,10 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import java.io.File;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ButtonType;
 
 public class GameUI extends Application
 {
@@ -26,12 +30,17 @@ public class GameUI extends Application
     private VBox buttonBox;
     private Button creditsButton;
     private Button backButton;
+    private Button playButton;
+    private Button wipButton;
+    private MediaPlayer introSongPlayer;
+    private MediaPlayer buttonPressPlayer;
 
     @Override
     public void start(Stage primaryStage)
     {
         root = new StackPane();
-
+        playIntroSong();
+        
         Image initialBackgroundImage = new Image("file:resources/backdrop.jpg");
         backgroundImageView = new ImageView(initialBackgroundImage);
         backgroundImageView.setPreserveRatio(false);
@@ -42,12 +51,11 @@ public class GameUI extends Application
         title.setFont(Font.font("Arial", 48));
         title.setStyle("-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;");
 
-        // Adding a smoother, controlled floaty effect to the title
         addSmoothFloatyEffectToTitle();
 
-        Button playButton = createStyledButton("Play", "#007bff", "#0056b3");
+        playButton = createStyledButton("Play", "#007bff", "#0056b3");
         creditsButton = createStyledButton("Credits", "#28a745", "#1c7430");
-        Button wipButton = createStyledButton("WIP", "#ffc107", "#e0a800");
+        wipButton = createStyledButton("WIP", "#ffc107", "#e0a800");
 
         setButtonHoverEffect(playButton, "#0056b3");
         setButtonHoverEffect(creditsButton, "#218838");
@@ -73,24 +81,34 @@ public class GameUI extends Application
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        playButton.setOnAction(e -> changeScreen(playButton, root, null));
-        creditsButton.setOnAction(e -> changeScreen(creditsButton, root, "Credits"));
-        wipButton.setOnAction(e -> changeScreen(wipButton, root, "WIP"));
+        playButton.setOnAction(e -> {
+            playButtonPressSound();
+            changeScreen(playButton, root, "Play");
+            stopIntroSong();
+        });
+        creditsButton.setOnAction(e -> {
+            playButtonPressSound();
+            changeScreen(creditsButton, root, "Credits");
+        });
+        wipButton.setOnAction(e -> {
+            playButtonPressSound();
+            changeScreen(wipButton, root, "WIP");
+        });
     }
 
     private Button createStyledButton(String text, String bgColor, String borderColor)
     {
         Button button = new Button(text);
         button.setStyle(String.format(
-                "-fx-font-size: 30px; " +
-                        "-fx-padding: 10 20; " +
-                        "-fx-background-color: %s; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-border-radius: 10px; " +
-                        "-fx-background-radius: 10px; " +
-                        "-fx-border: 2px solid %s; " +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);",
-                bgColor, borderColor));
+            "-fx-font-size: 30px; " +
+            "-fx-padding: 10 20; " +
+            "-fx-background-color: %s; " +
+            "-fx-text-fill: white; " +
+            "-fx-border-radius: 10px; " +
+            "-fx-background-radius: 10px; " +
+            "-fx-border: 2px solid %s; " +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);",
+            bgColor, borderColor));
         return button;
     }
 
@@ -102,7 +120,6 @@ public class GameUI extends Application
 
     private void addSmoothFloatyEffectToTitle()
     {
-        // Define the floating and scaling effect for the title
         Timeline timeline = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(title.translateYProperty(), 0),
@@ -111,69 +128,287 @@ public class GameUI extends Application
                 new KeyValue(title.rotateProperty(), 0)
             ),
             new KeyFrame(Duration.seconds(2),
-                new KeyValue(title.translateYProperty(), -20),  // Move up
-                new KeyValue(title.scaleXProperty(), 1.1),    // Slightly grow
+                new KeyValue(title.translateYProperty(), -20),
+                new KeyValue(title.scaleXProperty(), 1.1),
                 new KeyValue(title.scaleYProperty(), 1.1),
-                new KeyValue(title.rotateProperty(), 10)       // Small rotation
+                new KeyValue(title.rotateProperty(), 10)
             ),
             new KeyFrame(Duration.seconds(4),
-                new KeyValue(title.translateYProperty(), 0),   // Move down to original position
-                new KeyValue(title.scaleXProperty(), 1),       // Reset scale
+                new KeyValue(title.translateYProperty(), 0),
+                new KeyValue(title.scaleXProperty(), 1),
                 new KeyValue(title.scaleYProperty(), 1),
-                new KeyValue(title.rotateProperty(), 0)        // Reset rotation
+                new KeyValue(title.rotateProperty(), 0)
             )
         );
 
-        timeline.setCycleCount(Timeline.INDEFINITE);  // Loop the animation forever
-        timeline.setAutoReverse(true);  // Makes the animation go back and forth
-        timeline.play();  // Start the animation
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.setAutoReverse(true);
+        timeline.play();
+    }
+
+    private void playIntroSong()
+    {
+        String songFilePath = new File("resources/introSong.mp3").toURI().toString();
+        Media introMedia = new Media(songFilePath);
+        introSongPlayer = new MediaPlayer(introMedia);
+        introSongPlayer.setVolume(0.3);
+        introSongPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+        introSongPlayer.play();
+    }
+
+    private void stopIntroSong()
+    {
+        if (introSongPlayer != null)
+        {
+            introSongPlayer.stop();
+        }
+    }
+
+    private void playButtonPressSound()
+    {
+        String buttonPressSoundPath = new File("resources/buttonPress.mp3").toURI().toString();
+        Media buttonPressMedia = new Media(buttonPressSoundPath);
+        buttonPressPlayer = new MediaPlayer(buttonPressMedia);
+        buttonPressPlayer.setOnEndOfMedia(() -> buttonPressPlayer.dispose());
+        buttonPressPlayer.play();
     }
 
     private void changeScreen(Button button, StackPane root, String buttonType)
     {
-        // Hide background image temporarily
         backgroundImageView.setVisible(false);
-
         title.setVisible(false);
-        title.setDisable(true);
         buttonBox.setVisible(false);
-        buttonBox.setDisable(true);
 
-        String videoFilePath = "file:/resources/transScreen.mp4";
+        String videoFilePath = new File("resources/transScreen.mp4").toURI().toString();
 
-        Media media = new Media(videoFilePath);
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
-        MediaView mediaView = new MediaView(mediaPlayer);
-        mediaView.setPreserveRatio(false);
-        mediaView.setFitWidth(800);
-        mediaView.setFitHeight(600);
-
-        root.getChildren().add(mediaView);
-
-        mediaPlayer.play();
-
-        Scene scene = button.getScene();
-        scene.widthProperty().addListener((obs, oldVal, newVal) -> mediaView.setFitWidth(newVal.doubleValue()));
-        scene.heightProperty().addListener((obs, oldVal, newVal) -> mediaView.setFitHeight(newVal.doubleValue()));
-
-        mediaPlayer.setOnEndOfMedia(() ->
+        try
         {
-            root.getChildren().remove(mediaView);
+            Media media = new Media(videoFilePath);
+            MediaPlayer mediaPlayer = new MediaPlayer(media);
+            MediaView mediaView = new MediaView(mediaPlayer);
+            mediaView.setPreserveRatio(false);
+            mediaView.setFitWidth(800);
+            mediaView.setFitHeight(600);
 
-            // Change the background image to black.jpg after the video transition finishes
-            if ("Credits".equals(buttonType) || "WIP".equals(buttonType))
+            root.getChildren().add(mediaView);
+
+            mediaPlayer.play();
+
+            mediaPlayer.setOnEndOfMedia(() -> {
+                root.getChildren().remove(mediaView);
+
+                if ("Play".equals(buttonType))
+                {
+                    startGame(root);
+                }
+                else if ("Credits".equals(buttonType) || "WIP".equals(buttonType))
+                {
+                    backgroundImageView.setImage(new Image("file:resources/black.jpg"));
+                    backgroundImageView.setVisible(true);
+                    createBackButton(root);
+                }
+                else
+                {
+                    resetScreen(root);
+                }
+
+                button.setDisable(false);
+            });
+
+            mediaPlayer.setOnError(() -> {
+                root.getChildren().remove(mediaView);
+                resetScreen(root);
+                button.setDisable(false);
+            });
+        }
+        catch (Exception e)
+        {
+            resetScreen(root);
+            button.setDisable(false);
+        }
+    }
+
+    private void startGame(StackPane root)
+    {
+        String[] rules = {
+            "We are going to do a quick overview of the game and it's rules, Click the screen to procced to the next slide",
+            "This game is a interactive streaming version of the classc Who's that Pokemon! game",
+            "A black outline of the Pokemon will be shown and four options to guess from given underneath labelled 1, 2, 3, 4",
+            "Enter your twitch channel name in the popup box and the chat reading will begin when the Outline is displayed",
+            "The game will take inputs of 1 to 4 from your chat and output the most frequent number as the selected guess",
+            "After 15 seconds the correct answer will be displayed, and your wrong / right guess will be recorded",
+            "After you attempt 10 randomly selected Pokemon your overall record will be displayed along with accuracy"
+        };
+    
+        displayRules(root, rules);
+    }
+    
+    private void displayRules(StackPane root, String[] rules)
+    {
+        StackPane rulesPane = new StackPane();
+        rulesPane.setStyle("-fx-background-color: black;");
+        rulesPane.setPrefSize(800, 600);
+    
+        Text ruleText = new Text();
+        ruleText.setFont(Font.font("Arial", 36));
+        ruleText.setStyle("-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 1;");
+        ruleText.setWrappingWidth(700);
+    
+        rulesPane.getChildren().add(ruleText);
+        StackPane.setAlignment(ruleText, Pos.CENTER);
+        root.getChildren().add(rulesPane);
+    
+        final int[] currentPage = {0};
+        final long[] lastClickTime = {System.currentTimeMillis()};
+    
+        rulesPane.setOnMouseClicked(e -> {
+            long currentTime = System.currentTimeMillis();
+            long delay = currentPage[0] == 0 ? 1000 : 700; // 1 second for the first page, 0.7 seconds for the rest.
+    
+            if (currentTime - lastClickTime[0] < delay)
             {
-                backgroundImageView.setImage(new Image("file:resources/black.jpg"));
-                backgroundImageView.setVisible(true); // Now show the updated background
-                createBackButton(root); // Keep the back button for "Credits" and "WIP"
+                return; // Ignore clicks during the delay period.
+            }
+    
+            if (currentPage[0] < rules.length)
+            {
+                String nextRule = rules[currentPage[0]++];
+                playPageTurnEffect(ruleText, nextRule);
+                lastClickTime[0] = currentTime;
             }
             else
             {
-                resetScreen(root); // Reset to the initial screen for the play button
+                root.getChildren().remove(rulesPane);
+                initializeMainGame(root);
+            }
+        });
+    
+        // Start with the first rule after a 1-second delay.
+        Timeline initialDelay = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            playPageTurnEffect(ruleText, rules[currentPage[0]++]);
+            lastClickTime[0] = System.currentTimeMillis();
+        }));
+        initialDelay.play();
+    }
+
+    private void playPageTurnEffect(Text ruleText, String newRule)
+    {
+        Timeline fadeOut = new Timeline(
+            new KeyFrame(Duration.ZERO, new KeyValue(ruleText.opacityProperty(), 1)),
+            new KeyFrame(Duration.seconds(0.25), new KeyValue(ruleText.opacityProperty(), 0))
+        );
+    
+        Timeline fadeIn = new Timeline(
+            new KeyFrame(Duration.ZERO, new KeyValue(ruleText.opacityProperty(), 0)),
+            new KeyFrame(Duration.seconds(0.25), new KeyValue(ruleText.opacityProperty(), 1))
+        );
+    
+        fadeOut.setOnFinished(e -> ruleText.setText(newRule));
+        fadeOut.play();
+        fadeIn.setDelay(Duration.seconds(0.25));
+        fadeIn.play();
+    }
+
+    private void initializeMainGame(StackPane root)
+    {
+        showChannelSelectionDialog();
+    }
+
+   private void showChannelSelectionDialog()
+    {
+        System.out.println("showChannelSelectionDialog() called.");
+    
+        // Create the dialog.
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Channel Selection");
+        dialog.setHeaderText("Enter your channel name and select a platform:");
+    
+        // Create the input field for the channel name.
+        TextField channelNameField = new TextField();
+        channelNameField.setPromptText("Enter your channel name");
+    
+        // Create buttons for Facebook and Twitch.
+        ButtonType facebookButtonType = new ButtonType("Facebook");
+        ButtonType twitchButtonType = new ButtonType("Twitch");
+    
+        dialog.getDialogPane().getButtonTypes().addAll(facebookButtonType, twitchButtonType);
+    
+        // Add the input field to the dialog.
+        VBox dialogContent = new VBox(10, channelNameField);
+        dialogContent.setPadding(new Insets(10));
+        dialogContent.setAlignment(Pos.CENTER);
+        dialog.getDialogPane().setContent(dialogContent);
+    
+        // Disable buttons initially
+        Button facebookButton = (Button) dialog.getDialogPane().lookupButton(facebookButtonType);
+        Button twitchButton = (Button) dialog.getDialogPane().lookupButton(twitchButtonType);
+        facebookButton.setDisable(true);
+        twitchButton.setDisable(true);
+    
+        // Add a listener to enable buttons when text is entered.
+        channelNameField.textProperty().addListener((obs, oldText, newText) -> {
+            boolean validInput = !newText.trim().isEmpty();
+            facebookButton.setDisable(!validInput);
+            twitchButton.setDisable(!validInput);
+    
+            // Debugging: Track button enable/disable state
+            System.out.println("Channel Name: " + newText);
+            System.out.println("Facebook Button Disabled: " + facebookButton.isDisabled());
+            System.out.println("Twitch Button Disabled: " + twitchButton.isDisabled());
+        });
+    
+        // Handle the result.
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == facebookButtonType)
+            {
+                System.out.println("Facebook selected with channel name: " + channelNameField.getText().trim());
+                return "Facebook:" + channelNameField.getText().trim();
+            }
+            else if (dialogButton == twitchButtonType)
+            {
+                System.out.println("Twitch selected with channel name: " + channelNameField.getText().trim());
+                return "Twitch:" + channelNameField.getText().trim();
+            }
+            return null;
+        });
+    
+        // Show the dialog and handle the result
+        dialog.showAndWait().ifPresent(resultString -> {
+            System.out.println("Dialog closed with result: " + resultString);
+    
+            String[] parts = resultString.split(":", 2);
+            if (parts.length == 2)
+            {
+                String platform = parts[0];  // Platform (Facebook or Twitch)
+                String channelName = parts[1];  // Channel name
+                System.out.println("Parsed platform: " + platform);
+                System.out.println("Parsed channel name: " + channelName);
+    
+                // Pass the values to the startGameWithChannel function
+                startGameWithChannel(platform, channelName);
+            }
+            else
+            {
+                System.out.println("Dialog was cancelled or input was invalid.");
             }
         });
     }
+    
+    private void startGameWithChannel(String platform, String channelName)
+    {
+        System.out.println("startGameWithChannel() called.");
+        System.out.println("Platform: " + platform);
+        System.out.println("Channel Name: " + channelName);
+    
+        TwitchChatProcessor proccesor = new TwitchChatProcessor();
+        System.out.println("TwitchChatProcessor instance created.");
+        proccesor.intitializeUI(platform, channelName);
+        System.out.println("intitializeUI() called on TwitchChatProcessor.");
+        
+        
+    }
 
+    
     private void createBackButton(StackPane root)
     {
         backButton = createStyledButton("Back", "#dc3545", "#c82333");
@@ -183,22 +418,58 @@ public class GameUI extends Application
 
         root.getChildren().add(backButton);
 
-        backButton.setOnAction(e ->
-        {
-            changeScreen(backButton, root, null); // Play transition
-            resetScreen(root); // Reset screen after transition
-            root.getChildren().remove(backButton);
+        backButton.setOnAction(e -> {
+            String videoFilePath = new File("resources/transScreen.mp4").toURI().toString();
+
+            try
+            {
+                Media media = new Media(videoFilePath);
+                MediaPlayer mediaPlayer = new MediaPlayer(media);
+                MediaView mediaView = new MediaView(mediaPlayer);
+                mediaView.setPreserveRatio(false);
+                mediaView.setFitWidth(800);
+                mediaView.setFitHeight(600);
+
+                root.getChildren().add(mediaView);
+                mediaPlayer.play();
+
+                backButton.setDisable(true);
+
+                mediaPlayer.setOnEndOfMedia(() -> {
+                    root.getChildren().remove(mediaView);
+                    resetScreen(root);
+                });
+
+                mediaPlayer.setOnError(() -> {
+                    root.getChildren().remove(mediaView);
+                    resetScreen(root);
+                });
+            }
+            catch (Exception ex)
+            {
+                resetScreen(root);
+            }
         });
     }
 
     private void resetScreen(StackPane root)
     {
-        title.setVisible(true);
-        title.setDisable(false);
-        buttonBox.setVisible(true);
-        buttonBox.setDisable(false);
         backgroundImageView.setImage(new Image("file:resources/backdrop.jpg"));
-        backgroundImageView.setVisible(true); // Ensure the background is visible again
+        backgroundImageView.setVisible(true);
+
+        title.setVisible(true);
+        buttonBox.setVisible(true);
+
+        playButton.setDisable(false);
+        creditsButton.setDisable(false);
+        wipButton.setDisable(false);
+
+        if (backButton != null)
+        {
+            root.getChildren().remove(backButton);
+        }
+
+        root.getChildren().removeIf(node -> node instanceof MediaView);
     }
 
     public static void main(String[] args)
