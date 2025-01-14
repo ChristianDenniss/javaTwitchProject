@@ -13,7 +13,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
@@ -31,7 +30,7 @@ public class TwitchChatProcessor extends Application {
 
     private static final String SERVER = "irc.chat.twitch.tv";
     private static final int PORT = 6667;
-    private static String OAUTH_TOKEN = "oauth:g97k4b1qu77iglrc8bg0v5j3ffcuen"; // Replace with your OAuth token
+    private static String OAUTH_TOKEN = "oauth:g97k4b1qu77iglrc8bg0v5j3ffcuen"; // Initial OAuth token
     private static final String CLIENT_ID = "5c1crcl825kuxjwb01bhemnyevtt32";
     private static final String CLIENT_SECRET = "4lu452tydp90f3rwxdru7q3hlkvvo9";
     private static final String NICKNAME = "lopgop123"; // Replace with your username
@@ -41,49 +40,43 @@ public class TwitchChatProcessor extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-    
-     public void intitializeUI(String platform, String channel)
-    {
+
+    public void initializeUI(String platform, String channel) {
         VBox layout = new VBox(LAYOUT_SPACING);
-        layout.setStyle("-fx-alignment: center;");  // Centers the content
-    
-        // Create the labels to display platform and channel
+        layout.setStyle("-fx-alignment: center;");
+
         Label resultLabel = new Label("Platform: " + platform + "\nChannel: " + channel);
         Label countLabel1 = new Label("Message 1: 0");
         Label countLabel2 = new Label("Message 2: 0");
         Label countLabel3 = new Label("Message 3: 0");
         Label countLabel4 = new Label("Message 4: 0");
         Label countdownLabel = new Label("Time Left: 0");
-        Button startButton = new Button("Start Entry Period");
-    
-        startButton.setOnAction(event -> 
-        {
+        Button startButton = new Button("Start Round");
+
+        startButton.setOnAction(event -> {
+            startButton.setDisable(true); // Disable the button
             resultLabel.setText("Entry period active. Listening for messages...");
             countLabel1.setText("Message 1: 0");
             countLabel2.setText("Message 2: 0");
             countLabel3.setText("Message 3: 0");
             countLabel4.setText("Message 4: 0");
             countdownLabel.setText("Time Left: 15");
-            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel); 
+            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
             initializeTwitchClient(); // Initialize connection to the new channel
         });
-    
-        // Add the prompt label and the other components to the layout
+
         layout.getChildren().addAll(resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
-    
-        // Check if primaryStage exists, otherwise create a new one
-        if (primaryStage == null) 
-        {
-            primaryStage = new Stage();  // Create a new stage if it's null
+
+        if (primaryStage == null) {
+            primaryStage = new Stage(); // Create a new stage if it's null
         }
-        
-        // Set the scene for the existing or newly created stage
+
         Scene scene = new Scene(layout, 400, 250);
-        primaryStage.setScene(scene); // Use the existing primaryStage or the newly created one
+        primaryStage.setScene(scene);
         primaryStage.setTitle("Twitch Chat Processor");
         primaryStage.show();
     }
-    
+
     @Override
     public void start(Stage primaryStage) {
         VBox layout = new VBox(LAYOUT_SPACING);
@@ -96,18 +89,19 @@ public class TwitchChatProcessor extends Application {
         Label countLabel4 = new Label("Message 4: 0");
         Label countdownLabel = new Label("Time Left: 0");
         Button startButton = new Button("Start Entry Period");
-        TextField channelField = new TextField(channel); // TextField for channel input
+        TextField channelField = new TextField(channel);
         channelField.setPromptText("Enter Channel Name");
 
         startButton.setOnAction(event -> {
             channel = "#" + channelField.getText(); // Get the channel name entered by the user
+            startButton.setDisable(true); // Disable the button
             resultLabel.setText("Entry period active. Listening for messages...");
             countLabel1.setText("Message 1: 0");
             countLabel2.setText("Message 2: 0");
             countLabel3.setText("Message 3: 0");
             countLabel4.setText("Message 4: 0");
             countdownLabel.setText("Time Left: 15");
-            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel);
+            startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
             initializeTwitchClient(); // Initialize connection to the new channel
         });
 
@@ -119,23 +113,33 @@ public class TwitchChatProcessor extends Application {
         primaryStage.show();
     }
 
-    private void initializeTwitchClient() {
+    private void initializeTwitchClient() 
+    {
         try {
             socket = new Socket(SERVER, PORT);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
-
+    
             out.println("PASS " + OAUTH_TOKEN);
             out.println("NICK " + NICKNAME);
             out.println("JOIN " + channel);
-
+    
             new Thread(this::listenForMessages).start();
+            
+            // Schedule the token refresh every 10 minutes
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            scheduler.scheduleAtFixedRate(() -> {
+                refreshOAuthToken(); // Refresh the OAuth token periodically
+            }, 0, 10, TimeUnit.MINUTES); // 10 minutes interval
+    
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void listenForMessages() {
+
+    private void listenForMessages() 
+    {
         try {
             String line;
             while ((line = in.readLine()) != null) {
@@ -157,7 +161,7 @@ public class TwitchChatProcessor extends Application {
         return (messageIndex != -1) ? rawLine.substring(messageIndex + 2) : "";
     }
 
-    private void startEntryPeriod(int seconds, Label resultLabel, Label countLabel1, Label countLabel2, Label countLabel3, Label countLabel4, Label countdownLabel) {
+    private void startEntryPeriod(int seconds, Label resultLabel, Label countLabel1, Label countLabel2, Label countLabel3, Label countLabel4, Label countdownLabel, Button startButton) {
         messageCounts = new int[4]; // Reset counts
         isEntryPeriodActive = true;
         final int[] countdown = {seconds};
@@ -211,39 +215,45 @@ public class TwitchChatProcessor extends Application {
 
         counts.sort(Comparator.comparingInt(MessageCount::getCount).reversed());
 
-        for (int i = 0; i < counts.size(); i++) {
-            MessageCount count = counts.get(i);
-            String color = getColorForRank(i + 1, count.getCount());
-            Platform.runLater(() -> count.getLabel().setStyle(color));
-        }
-
         return counts.get(0).getCount();
     }
 
-    private String getColorForRank(int rank, int count) {
-        if (count == 0) return "-fx-text-fill: black";
-        switch (rank) {
-            case 1: return "-fx-text-fill: #FFD700"; // Gold color
-            case 2: return "-fx-text-fill: #C0C0C0"; // Silver color
-            case 3: return "-fx-text-fill: #CD7F32"; // Bronze color
-            case 4: return "-fx-text-fill: black";  // Black color for the last one
-            default: return "-fx-text-fill: black";
+    public static void refreshOAuthToken() 
+    {
+        try {
+            String newToken = RefreshToken.refreshAccessToken(); // Call refreshAccessToken from RefreshToken class
+            if (newToken != null) {
+                OAUTH_TOKEN = newToken; // Update the global OAuth token
+                System.out.println("OAuth token refreshed successfully.");
+            } else {
+                System.err.println("Failed to refresh OAuth token. Received null token.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error refreshing OAuth token: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private static class MessageCount {
-        private final int message;
+
+
+
+    static class MessageCount {
+        private final int messageId;
         private final int count;
         private final Label label;
 
-        public MessageCount(int message, int count, Label label) {
-            this.message = message;
+        public MessageCount(int messageId, int count, Label label) {
+            this.messageId = messageId;
             this.count = count;
             this.label = label;
         }
 
-        public int getMessage() { return message; }
-        public int getCount() { return count; }
-        public Label getLabel() { return label; }
+        public int getCount() {
+            return count;
+        }
+
+        public Label getLabel() {
+            return label;
+        }
     }
 }
