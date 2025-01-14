@@ -1,78 +1,64 @@
-
 /**
- * Basic pokemon class to create the characters
+ * Basic Pokémon class for identifying Pokémon in the game.
  *
  * @Christian Dennis
  * @2025-01-09
  * @0.0.1
  */
-public class Pokemon
-{
+public class Pokemon {
+
     private String name;
-    private String type;
-    private int level, maxHP, currentHP, attack, defense;
-   
-     public Pokemon(String name, String type, int level,int maxHP, int attack, int defense) 
-     {
+    private String type;    // Type of Pokémon (e.g., Fire, Water, Electric)
+    private String rarity;  // Rarity of Pokémon (e.g., Common, Rare, Legendary)
+    private String size;    // Size of Pokémon (e.g., Small, Medium, Large)
+    private String imageFile;  // Image file path to display Pokémon image
+    
+    // Constructor
+    public Pokemon(String name, String type, String rarity, String size, String imageFile) 
+    {
         this.name = name;
         this.type = type;
-        this.level = level;
-        this.maxHP = maxHP;
-        this.currentHP = maxHP;
-        this.attack = attack;
-        this.defense = defense;
-    }
-    
-    public void levelUp() 
-    {
-        this.level++;
-        this.maxHP += 10; // Increase health with level
-        this.attack += 5;  // Increase attack with level
-        this.defense += 3; // Increase defense with level
-        System.out.println(name + " leveled up to level " + level);
+        this.rarity = rarity;
+        this.size = size;
+        this.imageFile = imageFile;
     }
 
-    public void takeDamage(int damage) 
-    {
-        int damageTaken = Math.max(0, damage - defense); // Reduce damage by defense
-        this.currentHP -= damageTaken;
-        if (this.currentHP <= 0) 
-        {
-            this.currentHP = 0;
-            System.out.println(name + " has fainted!");
-        } else {
-            System.out.println(name + " took " + damageTaken + " damage. Remaining health: " + currentHP);
-        }
-    }
-
-    public void attack(Pokemon target) 
-    {
-        System.out.println(this.name + " attacks " + target.name + "!");
-        target.takeDamage(this.attack);
-    }
-
-    // Getter and Setter methods
+    // Getter methods
     public String getName() 
     {
         return name;
     }
 
-    public int getLevel() 
+    public String getType() 
     {
-        return level;
+        return type;
     }
 
-    public int getHealth() 
+    public String getRarity() 
     {
-        return currentHP;
-    }
-    
-      @Override
-    public String toString()
-    {
-        return "Pokemon { Name: " + name + ", Type: " + type + ", Level: " + level + ", HP: " + currentHP + "/" + maxHP + ", Attack: " + attack + ", Defense: " + defense + " }";
+        return rarity;
     }
 
+    public String getSize() 
+    {
+        return size;
+    }
 
-    
+    public String getImageFile() 
+    {
+        return imageFile;
+    }
+
+    // Override toString for debugging and displaying
+    @Override
+    public String toString() 
+    {
+        return "Pokemon { Name: " + name + ", Type: " + type + ", Rarity: " + rarity + ", Size: " + size + " }";
+    }
+
+    // You can also add additional methods for displaying hints or getting clues about the Pokémon
+    public String getHint() 
+    {
+        return "Type: " + type + ", Rarity: " + rarity + ", Size: " + size;
+    }
 }
