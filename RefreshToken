@@ -4,11 +4,12 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 
 public class RefreshToken {
-    private static final String CLIENT_ID = "5c1crcl825kuxjwb01bhemnyevtt32"; // Replace with your client ID
-    private static final String CLIENT_SECRET = "4lu452tydp90f3rwxdru7q3hlkvvo9"; // Replace with your client secret
-    private static String refreshToken = "klk7tje4nd3rqqc0papkhd247ro0fp142s1w0pzpbe75c09rmu"; // Replace with your refresh token
+    private static final String CLIENT_ID = System.getenv("TWITCH_CLIENT_ID"); // Use environment variables
+    private static final String CLIENT_SECRET = System.getenv("TWITCH_CLIENT_SECRET"); // Use environment variables
+    private static String refreshToken = System.getenv("TWITCH_REFRESH_TOKEN"); // Use environment variables
 
     public static String refreshAccessToken() throws Exception {
         String urlParameters = "client_id=" + CLIENT_ID +
@@ -20,10 +21,14 @@ public class RefreshToken {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
+        connection.setConnectTimeout(5000); // Set timeout for connection
+        connection.setReadTimeout(5000); // Set timeout for reading response
 
         try (OutputStreamWriter os = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
             os.write(urlParameters);
             os.flush();
+        } catch (IOException e) {
+            throw new IOException("Error writing to output stream", e);
         }
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
@@ -34,6 +39,8 @@ public class RefreshToken {
             }
 
             return parseAccessToken(response.toString());
+        } catch (IOException e) {
+            throw new IOException("Error reading from input stream", e);
         }
     }
 
@@ -45,7 +52,17 @@ public class RefreshToken {
         if (startIndex != -1 && endIndex != -1) {
             return json.substring(startIndex, endIndex);
         } else {
-            return null;
+            throw new IllegalArgumentException("Access token not found in the response");
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            String newAccessToken = refreshAccessToken();
+            System.out.println("New Access Token: " + newAccessToken);
+        } catch (Exception e) {
+            System.err.println("Error refreshing token: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
