@@ -1,0 +1,51 @@
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+
+public class RefreshToken {
+    private static final String CLIENT_ID = "5c1crcl825kuxjwb01bhemnyevtt32"; // Replace with your client ID
+    private static final String CLIENT_SECRET = "4lu452tydp90f3rwxdru7q3hlkvvo9"; // Replace with your client secret
+    private static String refreshToken = "klk7tje4nd3rqqc0papkhd247ro0fp142s1w0pzpbe75c09rmu"; // Replace with your refresh token
+
+    public static String refreshAccessToken() throws Exception {
+        String urlParameters = "client_id=" + CLIENT_ID +
+                               "&client_secret=" + CLIENT_SECRET +
+                               "&refresh_token=" + refreshToken +
+                               "&grant_type=refresh_token";
+        
+        URL url = new URL("https://id.twitch.tv/oauth2/token");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setDoOutput(true);
+
+        try (OutputStreamWriter os = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
+            os.write(urlParameters);
+            os.flush();
+        }
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                response.append(line);
+            }
+
+            return parseAccessToken(response.toString());
+        }
+    }
+
+    private static String parseAccessToken(String json) {
+        String tokenKey = "\"access_token\":\"";
+        int startIndex = json.indexOf(tokenKey) + tokenKey.length();
+        int endIndex = json.indexOf("\"", startIndex);
+
+        if (startIndex != -1 && endIndex != -1) {
+            return json.substring(startIndex, endIndex);
+        } else {
+            return null;
+        }
+    }
+}
