@@ -1,0 +1,54 @@
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
+
+public class PokemonGame {
+
+    public static List<Pokemon> createPokemon()
+    {
+        
+        // Create Pokemon objects using the constructor
+        Random randNum = new Random();
+        Pokemon pikachu = new Pokemon("Pikachu", "Electric", "Common", "Tiny", "resources/images/pikachu.png");
+        Pokemon charmander = new Pokemon("Charmander", "Fire/Flying", "Uncommon", "Small", "resources/images/charmander.png");
+        Pokemon bulbasaur = new Pokemon("Bulbasaur", "Grass/Poison", "Common", "Tiny", "resources/images/bulbasaur.png");
+        Pokemon jigglypuff = new Pokemon("Jigglypuff", "Normal/Fairy", "Uncommon", "Tiny", "resources/images/jigglypuff.png");
+        Pokemon mewtwo = new Pokemon("Mewtwo", "Psychic", "Legendary", "Bigger", "resources/images/mewtwo.png");
+        Pokemon eevee = new Pokemon("Eevee", "Normal", "Common", "Tiny", "resources/images/eevee.png");
+        Pokemon snorlax = new Pokemon("Snorlax", "Normal", "Rare", "Big", "resources/images/snorlax.png");
+        Pokemon gengar = new Pokemon("Gengar", "Ghost/Poison", "Rare", "Medium", "resources/images/gengar.png");
+        Pokemon gyarados = new Pokemon("Gyarados", "Water/Flying", "Uncommon", "Huge", "resources/images/gyarados.png");
+        Pokemon lucario = new Pokemon("Lucario", "Fighting/Steel", "Uncommon", "Medium", "resources/images/lucario.png");
+        Pokemon mew = new Pokemon("Mew", "Psychic", "Mythical", "Tiny", "resources/images/mew.png");
+        Pokemon rayquaza = new Pokemon("Rayquaza", "Dragon/Flying", "Legendary", "Huge", "resources/images/rayquaza.png");
+        Pokemon arcanine = new Pokemon("Arcanine", "Fire", "Uncommon", "Bigger", "resources/images/arcanine.png");
+        Pokemon blastoise = new Pokemon("Blastoise", "Water", "Uncommon", "Bigger", "resources/images/blastoise.png");
+        Pokemon alakazam = new Pokemon("Alakazam", "Psychic", "Rare", "Medium", "resources/images/alakazam.png");
+        Pokemon zoroark = new Pokemon("Zoroark", "Dark", "Rare", "Bigger", "resources/images/zoroark.png");
+        Pokemon torterra = new Pokemon("Torterra", "Grass/Ground", "Uncommon", "Big", "resources/images/torterra.png");
+        Pokemon ditto = new Pokemon("Ditto", "Normal", "Rare", "Tiny", "resources/images/ditto.png");
+        Pokemon chandelure = new Pokemon("Chandelure", "Ghost/Fire", "Rare", "Small", "resources/images/chandelure.png");
+        Pokemon zygarde = new Pokemon("Zygarde", "Dragon/Ground", "Legendary", "Huge", "resources/images/zygarde.png");
+
+        // Store Pokémon in a list (using ArrayList to allow modification)
+        List<Pokemon> pokemonList = new ArrayList<>(Arrays.asList(
+            pikachu, charmander, bulbasaur, jigglypuff, mewtwo, eevee, 
+            snorlax, gengar, gyarados, lucario, mew, rayquaza, 
+            arcanine, blastoise, alakazam, zoroark, torterra, 
+            ditto, chandelure, zygarde));
+
+        return pokemonList;
+    }
+    
+    // Method to randomly select a Pokémon from the list and remove it
+    public static Pokemon getRandomPokemon(List<Pokemon> pokemonList) {
+        Random rand = new Random();
+        int randomIndex = rand.nextInt(pokemonList.size());  // Generate a random index
+        Pokemon selectedPokemon = pokemonList.get(randomIndex);  // Get the Pokémon at the random index
+        pokemonList.remove(randomIndex);  // Remove the selected Pokémon from the list
+        return selectedPokemon;  // Return the selected Pokémon
+    }
+    
+
+}
