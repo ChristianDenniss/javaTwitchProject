@@ -5,17 +5,18 @@ import java.io.BufferedReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
+import java.net.URLEncoder;
 
 public class RefreshToken {
-    private static final String CLIENT_ID = System.getenv("TWITCH_CLIENT_ID"); // Use environment variables
-    private static final String CLIENT_SECRET = System.getenv("TWITCH_CLIENT_SECRET"); // Use environment variables
-    private static String refreshToken = System.getenv("TWITCH_REFRESH_TOKEN"); // Use environment variables
-
+    private static final String CLIENT_ID = "5c1crcl825kuxjwb01bhemnyevtt32";  // Replace with your actual Twitch Client ID
+    private static final String CLIENT_SECRET = "4lu452tydp90f3rwxdru7q3hlkvvo9";  // Replace with your actual Twitch Client Secret
+    private static String refreshToken = "e98e857m3scwk153el0fbbrvqvmd38nbi716vavlat43xvmur7";
+    
     public static String refreshAccessToken() throws Exception {
-        String urlParameters = "client_id=" + CLIENT_ID +
-                               "&client_secret=" + CLIENT_SECRET +
-                               "&refresh_token=" + refreshToken +
-                               "&grant_type=refresh_token";
+        String urlParameters = "client_id=" + URLEncoder.encode(CLIENT_ID, "UTF-8") +
+                               "&client_secret=" + URLEncoder.encode(CLIENT_SECRET, "UTF-8") +
+                               "&refresh_token=" + URLEncoder.encode(refreshToken, "UTF-8") +
+                               "&grant_type=" + URLEncoder.encode("refresh_token", "UTF-8");
         
         URL url = new URL("https://id.twitch.tv/oauth2/token");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -31,13 +32,21 @@ public class RefreshToken {
             throw new IOException("Error writing to output stream", e);
         }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+        int responseCode = connection.getResponseCode();
+        InputStreamReader reader;
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            reader = new InputStreamReader(connection.getInputStream());
+        } else {
+            reader = new InputStreamReader(connection.getErrorStream());
+            System.out.println("Error Response Code: " + responseCode);
+        }
+
+        try (BufferedReader br = new BufferedReader(reader)) {
             StringBuilder response = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {
                 response.append(line);
             }
-
             return parseAccessToken(response.toString());
         } catch (IOException e) {
             throw new IOException("Error reading from input stream", e);
