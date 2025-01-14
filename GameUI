@@ -5,6 +5,10 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -17,6 +21,7 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.animation.FadeTransition;
 import java.io.File;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
@@ -40,6 +45,14 @@ public class GameUI extends Application
     {
         root = new StackPane();
         playIntroSong();
+        try
+        {
+            OAuthRedirectServer.main(new String[0]);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        } //start local server, cant pass args so pass empty array
         
         Image initialBackgroundImage = new Image("file:resources/backdrop.jpg");
         backgroundImageView = new ImageView(initialBackgroundImage);
@@ -405,9 +418,35 @@ public class GameUI extends Application
         proccesor.initializeUI(platform, channelName);
         System.out.println("intitializeUI() called on TwitchChatProcessor.");
         
+        Image initialBackgroundImage = new Image("file:resources/whosThatBG.jpg");
+        backgroundImageView = new ImageView(initialBackgroundImage);
+        backgroundImageView.setPreserveRatio(false);
+        backgroundImageView.setFitWidth(800);
+        backgroundImageView.setFitHeight(600);
+        
+        List<Pokemon> pokemonList = PokemonGame.createPokemon();
+
+    }
+    
+    public static Pokemon showPokemon(List<Pokemon> pokemonList) 
+    {
+        // Get the path of the video file in the resources folder
+        String videoFilePath = new File("resources/transScreen.mp4").toURI().toString();
+        
+        // Create a Media object
+        Media media = new Media(videoFilePath);
+        
+        // Create a MediaPlayer to play the media
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        
+        // Play the video
+        mediaPlayer.play();
+        
+        Pokemon selectedPokemon = PokemonGame.getRandomPokemon(pokemonList);
+        
+        return selectedPokemon;
         
     }
-
     
     private void createBackButton(StackPane root)
     {
@@ -451,7 +490,39 @@ public class GameUI extends Application
             }
         });
     }
+    
+    private static void displayPokemonInfo(Pokemon selectedPokemon) 
+    {
+        // Display the Pokémon's image
+        VBox pokemonInfoBox = new VBox();
+        Image pokemonImage = new Image("file:" + selectedPokemon.getImageFile());
+        ImageView pokemonImageView = new ImageView(pokemonImage);
+        pokemonImageView.setPreserveRatio(true);
+        pokemonImageView.setFitWidth(200);  // Set size as needed
 
+        // Display the Pokémon's name
+        Text pokemonNameText = new Text("Name: " + selectedPokemon.getName());
+
+        // Display the Pokémon's type
+        Text pokemonTypeText = new Text("Type: " + selectedPokemon.getType());
+
+        // Display the Pokémon's rarity
+        Text pokemonRarityText = new Text("Rarity: " + selectedPokemon.getRarity());
+        
+        // Display the Pokémon's size
+        Text pokemonSizeText = new Text("Type: " + selectedPokemon.getSize());
+
+        // Add to the VBox (you can add more details here)
+        pokemonInfoBox.getChildren().clear();  // Clear previous info
+        pokemonInfoBox.getChildren().addAll(pokemonNameText, pokemonTypeText, pokemonRarityText, pokemonImageView);
+
+        // Apply a fade-in effect to the Pokémon image
+        FadeTransition fadeIn = new FadeTransition(Duration.seconds(2), pokemonImageView);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+    }
+    
     private void resetScreen(StackPane root)
     {
         backgroundImageView.setImage(new Image("file:resources/backdrop.jpg"));
