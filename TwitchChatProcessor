@@ -30,7 +30,7 @@ public class TwitchChatProcessor extends Application {
 
     private static final String SERVER = "irc.chat.twitch.tv";
     private static final int PORT = 6667;
-    private static String OAUTH_TOKEN = "oauth:g97k4b1qu77iglrc8bg0v5j3ffcuen"; // Initial OAuth token
+    private static String OAUTH_TOKEN = "oauth:yom8rvppzq03fewcs32305jmpfkc37"; // Initial OAuth token
     private static final String CLIENT_ID = "5c1crcl825kuxjwb01bhemnyevtt32";
     private static final String CLIENT_SECRET = "4lu452tydp90f3rwxdru7q3hlkvvo9";
     private static final String NICKNAME = "lopgop123"; // Replace with your username
@@ -54,6 +54,9 @@ public class TwitchChatProcessor extends Application {
         Button startButton = new Button("Start Round");
 
         startButton.setOnAction(event -> {
+            
+            //insert show poke function here
+            
             startButton.setDisable(true); // Disable the button
             resultLabel.setText("Entry period active. Listening for messages...");
             countLabel1.setText("Message 1: 0");
