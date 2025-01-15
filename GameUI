@@ -3,6 +3,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import java.util.Collections;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import java.util.List;
@@ -17,6 +18,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.media.Media;
+import javafx.scene.layout.*;
+import javafx.scene.text.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.geometry.*;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.Stage;
@@ -27,6 +33,8 @@ import javafx.scene.control.Dialog;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ButtonType;
+import java.util.Set;
+import java.util.HashSet;
 
 public class GameUI extends Application
 {
@@ -40,10 +48,13 @@ public class GameUI extends Application
     private Button wipButton;
     private MediaPlayer introSongPlayer;
     private MediaPlayer buttonPressPlayer;
+    public List<Pokemon> pokemonList = PokemonGame.createPokemon();
+    public Pokemon selectedPokemon = PokemonGame.getRandomPokemon(pokemonList);
 
     @Override
     public void start(Stage primaryStage)
-    {
+    {   
+        // Create the list of Pokémon and pick a random one
         root = new StackPane();
         playIntroSong();
         try
@@ -422,12 +433,102 @@ public class GameUI extends Application
         Image initialBackgroundImage = new Image("file:resources/whosThatBG.jpg");
         backgroundImageView.setImage(initialBackgroundImage);
     
-        // Create the list of Pokémon and pick a random one
-        List<Pokemon> pokemonList = PokemonGame.createPokemon();
-        Pokemon selectedPokemon = PokemonGame.getRandomPokemon(pokemonList);
-        
         // Display the Pokémon info and fade it in
+    
+        // Call the method to create the rectangle boxes at the bottom
+        createPokemonNameRectangles(pokemonList, selectedPokemon);
+    }
+    
+    private void startRound(Pokemon selectedPokemon)
+    {
         displayPokemonBlack(selectedPokemon, root);
+        createPokemonNameRectangles(pokemonList, selectedPokemon);
+    }
+    
+    private void createPokemonNameRectangles(List<Pokemon> pokemonList, Pokemon selectedPokemon) 
+    {
+        // Create a container for the rectangles at the bottom
+        HBox rectanglesContainer = new HBox(20); // 20px spacing between rectangles
+        rectanglesContainer.setAlignment(Pos.CENTER);
+        rectanglesContainer.setPadding(new Insets(20));
+        rectanglesContainer.setPrefHeight(150); // Set the preferred height
+    
+        // Use VBox or AnchorPane to position it at the bottom
+        VBox bottomContainer = new VBox();
+        bottomContainer.setAlignment(Pos.BOTTOM_CENTER); // Align content at the bottom
+        bottomContainer.getChildren().add(rectanglesContainer); // Add the HBox with rectangles to it
+    
+        root.getChildren().add(bottomContainer); // Add the VBox to the root layout
+    
+        // Generate unique Pokémon names for the blocks
+        Set<String> randomNames = new HashSet<>();
+        randomNames.add(selectedPokemon.getName()); // Ensure selected Pokémon is included
+        while (randomNames.size() < 4) 
+        {
+            String randomName = PokemonGame.getRandomPokemon(pokemonList).getName();
+            randomNames.add(randomName);
+        }
+    
+        // Convert the set to a list so we can shuffle it
+        List<String> shuffledNames = new ArrayList<>(randomNames);
+    
+        // Shuffle the list of names to randomize their order
+        Collections.shuffle(shuffledNames);
+    
+        // Create rectangles with names
+        for (String name : shuffledNames) 
+        {
+            StackPane block = new StackPane();
+            Rectangle rectangle = new Rectangle(150, 100); // Dimensions of each rectangle
+            rectangle.setFill(Color.LIGHTGRAY);
+            rectangle.setArcWidth(20);
+            rectangle.setArcHeight(20);
+    
+            Text text = new Text(name);
+            text.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            text.setFill(Color.BLACK);
+    
+            block.getChildren().addAll(rectangle, text);
+            rectanglesContainer.getChildren().add(block);
+        }
+    }
+
+    private void updatePokemonNameRectangles(List<Pokemon> pokemonList, Pokemon selectedPokemon, HBox rectanglesContainer) 
+    {
+        // Clear existing rectangles (if needed)
+        rectanglesContainer.getChildren().clear();
+    
+        // Generate unique Pokémon names for the blocks
+        Set<String> randomNames = new HashSet<>();
+        randomNames.add(selectedPokemon.getName()); // Ensure selected Pokémon is included
+        while (randomNames.size() < 4) 
+        {
+            String randomName = PokemonGame.getRandomPokemon(pokemonList).getName();
+            randomNames.add(randomName);
+        }
+    
+        // Convert the set to a list so we can shuffle it
+        List<String> shuffledNames = new ArrayList<>(randomNames);
+    
+        // Shuffle the list of names to randomize their order
+        Collections.shuffle(shuffledNames);
+    
+        // Create new rectangles with updated names
+        for (String name : shuffledNames) 
+        {
+            StackPane block = new StackPane();
+            Rectangle rectangle = new Rectangle(150, 100); // Dimensions of each rectangle
+            rectangle.setFill(Color.LIGHTGRAY);
+            rectangle.setArcWidth(20);
+            rectangle.setArcHeight(20);
+    
+            Text text = new Text(name);
+            text.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            text.setFill(Color.BLACK);
+    
+            block.getChildren().addAll(rectangle, text);
+            rectanglesContainer.getChildren().add(block);
+        }
     }
 
     private void displayPokemonInfo(Pokemon selectedPokemon, StackPane root)    
