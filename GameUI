@@ -462,36 +462,36 @@ public class GameUI extends Application
     
     private void displayPokemonBlack(Pokemon selectedPokemon, StackPane root) 
     {
-    VBox pokemonInfoBox = new VBox();
-    pokemonInfoBox.setSpacing(10);  // Add some spacing between elements
-    
-    // Display Pokémon image
-    Image pokemonImage = new Image("file:" + selectedPokemon.getImageFile());
-    ImageView pokemonImageView = new ImageView(pokemonImage);
-    pokemonImageView.setPreserveRatio(true);
-    pokemonImageView.setFitWidth(200);
-    
-    // Apply ColorAdjust effect to make the image black (set brightness to 0)
-    ColorAdjust colorAdjust = new ColorAdjust();
-    colorAdjust.setBrightness(-1.0);  // Set brightness to -1 to make the image black
-    
-    // Apply the color adjust effect to the image view
-    pokemonImageView.setEffect(colorAdjust);
-    
-    pokemonInfoBox.getChildren().addAll(pokemonImageView);
-    
-    // Apply fade-in effect
-    FadeTransition fadeIn = new FadeTransition(Duration.seconds(2), pokemonImageView);
-    fadeIn.setFromValue(0.0);
-    fadeIn.setToValue(1.0);
-    fadeIn.play();
-    
-    // Add the new content to the existing root (StackPane)
-    root.getChildren().clear();  // Clear existing content (buttons, background, etc.)
-    root.getChildren().add(pokemonInfoBox);  // Add Pokémon info
+        VBox pokemonInfoBox = new VBox();
+        pokemonInfoBox.setSpacing(10);  // Add some spacing between elements
+        pokemonInfoBox.setAlignment(Pos.CENTER);  // Center the content horizontally
+        
+        // Display Pokémon image
+        Image pokemonImage = new Image("file:" + selectedPokemon.getImageFile());
+        ImageView pokemonImageView = new ImageView(pokemonImage);
+        pokemonImageView.setPreserveRatio(true);
+        pokemonImageView.setFitWidth(200);
+        
+        // Apply ColorAdjust effect to make the image black (set brightness to 0)
+        ColorAdjust colorAdjust = new ColorAdjust();
+        colorAdjust.setBrightness(-1.0);  // Set brightness to -1 to make the image black
+        
+        // Apply the color adjust effect to the image view
+        pokemonImageView.setEffect(colorAdjust);
+        
+        pokemonInfoBox.getChildren().addAll(pokemonImageView);
+        
+        // Apply fade-in effect
+        FadeTransition fadeIn = new FadeTransition(Duration.seconds(2), pokemonImageView);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+        
+        // Add the new content to the existing root (StackPane)
+        root.getChildren().clear();  // Clear existing content (buttons, background, etc.)
+        root.getChildren().add(pokemonInfoBox);  // Add Pokémon info
     }
 
-    
     private void createBackButton(StackPane root)
     {
         backButton = createStyledButton("Back", "#dc3545", "#c82333");
