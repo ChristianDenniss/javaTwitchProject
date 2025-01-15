@@ -24,6 +24,7 @@ import javafx.util.Duration;
 import javafx.animation.FadeTransition;
 import java.io.File;
 import javafx.scene.control.Dialog;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ButtonType;
 
@@ -407,46 +408,89 @@ public class GameUI extends Application
         });
     }
     
-    private void startGameWithChannel(String platform, String channelName)
+    private void startGameWithChannel(String platform, String channelName) 
     {
         System.out.println("startGameWithChannel() called.");
         System.out.println("Platform: " + platform);
         System.out.println("Channel Name: " + channelName);
     
-        TwitchChatProcessor proccesor = new TwitchChatProcessor();
+        TwitchChatProcessor processor = new TwitchChatProcessor();
         System.out.println("TwitchChatProcessor instance created.");
-        proccesor.initializeUI(platform, channelName);
-        System.out.println("intitializeUI() called on TwitchChatProcessor.");
-        
-        Image initialBackgroundImage = new Image("file:resources/whosThatBG.jpg");
-        backgroundImageView = new ImageView(initialBackgroundImage);
-        backgroundImageView.setPreserveRatio(false);
-        backgroundImageView.setFitWidth(800);
-        backgroundImageView.setFitHeight(600);
-        
-        List<Pokemon> pokemonList = PokemonGame.createPokemon();
-
-    }
+        processor.initializeUI(platform, channelName);
     
-    public static Pokemon showPokemon(List<Pokemon> pokemonList) 
-    {
-        // Get the path of the video file in the resources folder
-        String videoFilePath = new File("resources/transScreen.mp4").toURI().toString();
-        
-        // Create a Media object
-        Media media = new Media(videoFilePath);
-        
-        // Create a MediaPlayer to play the media
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
-        
-        // Play the video
-        mediaPlayer.play();
-        
+        // Change the background image for the game view
+        Image initialBackgroundImage = new Image("file:resources/whosThatBG.jpg");
+        backgroundImageView.setImage(initialBackgroundImage);
+    
+        // Create the list of Pokémon and pick a random one
+        List<Pokemon> pokemonList = PokemonGame.createPokemon();
         Pokemon selectedPokemon = PokemonGame.getRandomPokemon(pokemonList);
         
-        return selectedPokemon;
-        
+        // Display the Pokémon info and fade it in
+        displayPokemonBlack(selectedPokemon, root);
     }
+
+    private void displayPokemonInfo(Pokemon selectedPokemon, StackPane root)    
+    {
+        VBox pokemonInfoBox = new VBox();
+        pokemonInfoBox.setSpacing(10);  // Add some spacing between elements
+        
+        // Display Pokémon image
+        Image pokemonImage = new Image("file:" + selectedPokemon.getImageFile());
+        ImageView pokemonImageView = new ImageView(pokemonImage);
+        pokemonImageView.setPreserveRatio(true);
+        pokemonImageView.setFitWidth(200);
+        
+        // Display Pokémon details
+        Text pokemonNameText = new Text("Name: " + selectedPokemon.getName());
+        Text pokemonTypeText = new Text("Type: " + selectedPokemon.getType());
+        Text pokemonRarityText = new Text("Rarity: " + selectedPokemon.getRarity());
+        Text pokemonSizeText = new Text("Size: " + selectedPokemon.getSize());
+        
+        pokemonInfoBox.getChildren().addAll(pokemonNameText, pokemonTypeText, pokemonRarityText, pokemonSizeText, pokemonImageView);
+        
+        // Apply fade-in effect
+        FadeTransition fadeIn = new FadeTransition(Duration.seconds(2), pokemonImageView);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+    
+        // Add the new content to the existing root (StackPane)
+        root.getChildren().clear();  // Clear existing content (buttons, background, etc.)
+        root.getChildren().add(pokemonInfoBox);  // Add Pokémon info
+    }
+    
+    private void displayPokemonBlack(Pokemon selectedPokemon, StackPane root) 
+    {
+    VBox pokemonInfoBox = new VBox();
+    pokemonInfoBox.setSpacing(10);  // Add some spacing between elements
+    
+    // Display Pokémon image
+    Image pokemonImage = new Image("file:" + selectedPokemon.getImageFile());
+    ImageView pokemonImageView = new ImageView(pokemonImage);
+    pokemonImageView.setPreserveRatio(true);
+    pokemonImageView.setFitWidth(200);
+    
+    // Apply ColorAdjust effect to make the image black (set brightness to 0)
+    ColorAdjust colorAdjust = new ColorAdjust();
+    colorAdjust.setBrightness(-1.0);  // Set brightness to -1 to make the image black
+    
+    // Apply the color adjust effect to the image view
+    pokemonImageView.setEffect(colorAdjust);
+    
+    pokemonInfoBox.getChildren().addAll(pokemonImageView);
+    
+    // Apply fade-in effect
+    FadeTransition fadeIn = new FadeTransition(Duration.seconds(2), pokemonImageView);
+    fadeIn.setFromValue(0.0);
+    fadeIn.setToValue(1.0);
+    fadeIn.play();
+    
+    // Add the new content to the existing root (StackPane)
+    root.getChildren().clear();  // Clear existing content (buttons, background, etc.)
+    root.getChildren().add(pokemonInfoBox);  // Add Pokémon info
+    }
+
     
     private void createBackButton(StackPane root)
     {
@@ -457,7 +501,7 @@ public class GameUI extends Application
 
         root.getChildren().add(backButton);
 
-        backButton.setOnAction(e -> {
+        backButton.setOnAction(e ->     {
             String videoFilePath = new File("resources/transScreen.mp4").toURI().toString();
 
             try
@@ -474,12 +518,14 @@ public class GameUI extends Application
 
                 backButton.setDisable(true);
 
-                mediaPlayer.setOnEndOfMedia(() -> {
+                mediaPlayer.setOnEndOfMedia(() -> 
+                {
                     root.getChildren().remove(mediaView);
                     resetScreen(root);
                 });
 
-                mediaPlayer.setOnError(() -> {
+                mediaPlayer.setOnError(() -> 
+                {
                     root.getChildren().remove(mediaView);
                     resetScreen(root);
                 });
@@ -490,38 +536,7 @@ public class GameUI extends Application
             }
         });
     }
-    
-    private static void displayPokemonInfo(Pokemon selectedPokemon) 
-    {
-        // Display the Pokémon's image
-        VBox pokemonInfoBox = new VBox();
-        Image pokemonImage = new Image("file:" + selectedPokemon.getImageFile());
-        ImageView pokemonImageView = new ImageView(pokemonImage);
-        pokemonImageView.setPreserveRatio(true);
-        pokemonImageView.setFitWidth(200);  // Set size as needed
 
-        // Display the Pokémon's name
-        Text pokemonNameText = new Text("Name: " + selectedPokemon.getName());
-
-        // Display the Pokémon's type
-        Text pokemonTypeText = new Text("Type: " + selectedPokemon.getType());
-
-        // Display the Pokémon's rarity
-        Text pokemonRarityText = new Text("Rarity: " + selectedPokemon.getRarity());
-        
-        // Display the Pokémon's size
-        Text pokemonSizeText = new Text("Type: " + selectedPokemon.getSize());
-
-        // Add to the VBox (you can add more details here)
-        pokemonInfoBox.getChildren().clear();  // Clear previous info
-        pokemonInfoBox.getChildren().addAll(pokemonNameText, pokemonTypeText, pokemonRarityText, pokemonImageView);
-
-        // Apply a fade-in effect to the Pokémon image
-        FadeTransition fadeIn = new FadeTransition(Duration.seconds(2), pokemonImageView);
-        fadeIn.setFromValue(0.0);
-        fadeIn.setToValue(1.0);
-        fadeIn.play();
-    }
     
     private void resetScreen(StackPane root)
     {
