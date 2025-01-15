@@ -67,7 +67,9 @@ public class TwitchChatProcessor extends Application
             countLabel4.setText("Message 4: 0");
             countdownLabel.setText("Time Left: 15");
             startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
-            initializeTwitchClient(); // Initialize connection to the new channel
+            initializeTwitchClient();// Initialize connection to the new channel
+            Pokemon selectedPokemon = gameUI.selectedPokemon;
+            startRound(selectedPokemon);
         });
 
         layout.getChildren().addAll(resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
