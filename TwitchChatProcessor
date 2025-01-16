@@ -43,7 +43,8 @@ public class TwitchChatProcessor extends Application
         launch(args);
     }
 
-    public void initializeUI(String platform, String channel) {
+    public void initializeUI(String platform, String channel) 
+    {
         VBox layout = new VBox(LAYOUT_SPACING);
         layout.setStyle("-fx-alignment: center;");
 
@@ -55,7 +56,8 @@ public class TwitchChatProcessor extends Application
         Label countdownLabel = new Label("Time Left: 0");
         Button startButton = new Button("Start Round");
 
-        startButton.setOnAction(event -> {
+        startButton.setOnAction(event -> 
+        {
             
             //insert show poke function here
             
@@ -68,13 +70,16 @@ public class TwitchChatProcessor extends Application
             countdownLabel.setText("Time Left: 15");
             startEntryPeriod(15, resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
             initializeTwitchClient();// Initialize connection to the new channel
-            Pokemon selectedPokemon = gameUI.selectedPokemon;
-            startRound(selectedPokemon);
+            
+            GameUI gameUI = new GameUI();
+            Pokemon selectedPokemon = GameUI.selectedPokemon;
+            gameUI.startRound(selectedPokemon);
         });
 
         layout.getChildren().addAll(resultLabel, countLabel1, countLabel2, countLabel3, countLabel4, countdownLabel, startButton);
 
-        if (primaryStage == null) {
+        if (primaryStage == null) 
+        {
             primaryStage = new Stage(); // Create a new stage if it's null
         }
 
@@ -85,7 +90,8 @@ public class TwitchChatProcessor extends Application
     }
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) 
+    {
         VBox layout = new VBox(LAYOUT_SPACING);
         layout.setStyle("-fx-alignment: center;");
 
@@ -99,7 +105,8 @@ public class TwitchChatProcessor extends Application
         TextField channelField = new TextField(channel);
         channelField.setPromptText("Enter Channel Name");
 
-        startButton.setOnAction(event -> {
+        startButton.setOnAction(event -> 
+        {
             channel = "#" + channelField.getText(); // Get the channel name entered by the user
             startButton.setDisable(true); // Disable the button
             resultLabel.setText("Entry period active. Listening for messages...");
@@ -122,7 +129,8 @@ public class TwitchChatProcessor extends Application
 
     private void initializeTwitchClient() 
     {
-        try {
+        try 
+        {
             socket = new Socket(SERVER, PORT);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
@@ -135,11 +143,13 @@ public class TwitchChatProcessor extends Application
             
             // Schedule the token refresh every 10 minutes
             ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-            scheduler.scheduleAtFixedRate(() -> {
+            scheduler.scheduleAtFixedRate(() -> 
+            {
                 refreshOAuthToken(); // Refresh the OAuth token periodically
             }, 0, 10, TimeUnit.MINUTES); // 10 minutes interval
     
-        } catch (Exception e) {
+        } catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }
@@ -147,23 +157,29 @@ public class TwitchChatProcessor extends Application
 
     private void listenForMessages() 
     {
-        try {
+        try 
+        {
             String line;
-            while ((line = in.readLine()) != null) {
+            while ((line = in.readLine()) != null) 
+            {
                 System.out.println("Twitch IRC: " + line);
-                if (line.startsWith("PING")) {
+                if (line.startsWith("PING")) 
+                {
                     out.println("PONG :tmi.twitch.tv");
-                } else if (line.contains("PRIVMSG")) {
+                } else if (line.contains("PRIVMSG")) 
+                {
                     String message = parseMessage(line);
                     processMessage(message);
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }
 
-    private String parseMessage(String rawLine) {
+    private String parseMessage(String rawLine) 
+    {
         int messageIndex = rawLine.indexOf(" :");
         return (messageIndex != -1) ? rawLine.substring(messageIndex + 2) : "";
     }
@@ -173,17 +189,22 @@ public class TwitchChatProcessor extends Application
         isEntryPeriodActive = true;
         final int[] countdown = {seconds};
 
-        executor.schedule(() -> {
+        executor.schedule(() -> 
+        {
             isEntryPeriodActive = false;
-            Platform.runLater(() -> {
+            Platform.runLater(() -> 
+            {
                 int mostFrequentCount = determineMostFrequentMessage(countLabel1, countLabel2, countLabel3, countLabel4);
                 resultLabel.setText("Entry period over. Most frequent message count: " + mostFrequentCount);
             });
         }, seconds, TimeUnit.SECONDS);
 
-        executor.scheduleAtFixedRate(() -> {
-            if (isEntryPeriodActive) {
-                Platform.runLater(() -> {
+        executor.scheduleAtFixedRate(() -> 
+        {
+            if (isEntryPeriodActive) 
+            {
+                Platform.runLater(() -> 
+                {
                     countLabel1.setText("Message 1: " + messageCounts[0]);
                     countLabel2.setText("Message 2: " + messageCounts[1]);
                     countLabel3.setText("Message 3: " + messageCounts[2]);
@@ -192,13 +213,17 @@ public class TwitchChatProcessor extends Application
             }
         }, 0, 1, TimeUnit.SECONDS);
 
-        executor.scheduleAtFixedRate(() -> {
-            if (isEntryPeriodActive && countdown[0] > 0) {
-                Platform.runLater(() -> {
+        executor.scheduleAtFixedRate(() -> 
+        {
+            if (isEntryPeriodActive && countdown[0] > 0) 
+            {
+                Platform.runLater(() -> 
+                {
                     countdownLabel.setText("Time Left: " + countdown[0]);
                     countdown[0]--;
                 });
-            } else if (countdown[0] == 0) {
+            } else if (countdown[0] == 0) 
+            {
                 Platform.runLater(() -> countdownLabel.setText("Time Left: 0"));
             }
         }, 0, 1, TimeUnit.SECONDS);
@@ -207,7 +232,8 @@ public class TwitchChatProcessor extends Application
     public void processMessage(String message) {
         if (!isEntryPeriodActive) return;
 
-        if ("1".equals(message) || "2".equals(message) || "3".equals(message) || "4".equals(message)) {
+        if ("1".equals(message) || "2".equals(message) || "3".equals(message) || "4".equals(message)) 
+        {
             int value = Integer.parseInt(message);
             messageCounts[value - 1]++;
         }
@@ -227,15 +253,20 @@ public class TwitchChatProcessor extends Application
 
     public static void refreshOAuthToken() 
     {
-        try {
+        try 
+        {
             String newToken = RefreshToken.refreshAccessToken(); // Call refreshAccessToken from RefreshToken class
-            if (newToken != null) {
+            if (newToken != null) 
+            {
                 OAUTH_TOKEN = newToken; // Update the global OAuth token
                 System.out.println("OAuth token refreshed successfully.");
-            } else {
+            } 
+            else 
+            {
                 System.err.println("Failed to refresh OAuth token. Received null token.");
             }
-        } catch (Exception e) {
+        } catch (Exception e) 
+        {
             System.err.println("Error refreshing OAuth token: " + e.getMessage());
             e.printStackTrace();
         }
@@ -244,22 +275,26 @@ public class TwitchChatProcessor extends Application
 
 
 
-    static class MessageCount {
+    static class MessageCount 
+    {
         private final int messageId;
         private final int count;
         private final Label label;
 
-        public MessageCount(int messageId, int count, Label label) {
+        public MessageCount(int messageId, int count, Label label) 
+        {
             this.messageId = messageId;
             this.count = count;
             this.label = label;
         }
 
-        public int getCount() {
+        public int getCount() 
+        {
             return count;
         }
 
-        public Label getLabel() {
+        public Label getLabel() 
+        {
             return label;
         }
     }
