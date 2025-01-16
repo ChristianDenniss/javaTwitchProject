@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import javafx.scene.control.Button;
+import javafx.animation.PauseTransition;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
@@ -35,12 +36,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ButtonType;
 import java.util.Set;
 import java.util.HashSet;
+import javafx.scene.Node;
 
 public class GameUI extends Application
 {
     private ImageView backgroundImageView;
     private Text title;
-    private StackPane root;
+    private static StackPane root;
     private VBox buttonBox;
     private Button creditsButton;
     private Button backButton;
@@ -48,8 +50,8 @@ public class GameUI extends Application
     private Button wipButton;
     private MediaPlayer introSongPlayer;
     private MediaPlayer buttonPressPlayer;
-    public List<Pokemon> pokemonList = PokemonGame.createPokemon();
-    public Pokemon selectedPokemon = PokemonGame.getRandomPokemon(pokemonList);
+    public static List<Pokemon> pokemonList = PokemonGame.createPokemon();
+    public static Pokemon selectedPokemon = PokemonGame.getRandomPokemon(pokemonList);
 
     @Override
     public void start(Stage primaryStage)
@@ -432,67 +434,67 @@ public class GameUI extends Application
         // Change the background image for the game view
         Image initialBackgroundImage = new Image("file:resources/whosThatBG.jpg");
         backgroundImageView.setImage(initialBackgroundImage);
-    
-        // Display the Pokémon info and fade it in
-    
-        // Call the method to create the rectangle boxes at the bottom
-        createPokemonNameRectangles(pokemonList, selectedPokemon);
+       
     }
     
-    private void startRound(Pokemon selectedPokemon)
+    public void startRound(Pokemon selectedPokemon)
     {
         displayPokemonBlack(selectedPokemon, root);
         createPokemonNameRectangles(pokemonList, selectedPokemon);
     }
     
-    private void createPokemonNameRectangles(List<Pokemon> pokemonList, Pokemon selectedPokemon) 
+    private void createPokemonNameRectangles(List<Pokemon> pokemonList, Pokemon selectedPokemon)
     {
         // Create a container for the rectangles at the bottom
         HBox rectanglesContainer = new HBox(20); // 20px spacing between rectangles
         rectanglesContainer.setAlignment(Pos.CENTER);
         rectanglesContainer.setPadding(new Insets(20));
         rectanglesContainer.setPrefHeight(150); // Set the preferred height
-    
+
         // Use VBox or AnchorPane to position it at the bottom
         VBox bottomContainer = new VBox();
         bottomContainer.setAlignment(Pos.BOTTOM_CENTER); // Align content at the bottom
         bottomContainer.getChildren().add(rectanglesContainer); // Add the HBox with rectangles to it
-    
+
         root.getChildren().add(bottomContainer); // Add the VBox to the root layout
-    
+
         // Generate unique Pokémon names for the blocks
         Set<String> randomNames = new HashSet<>();
         randomNames.add(selectedPokemon.getName()); // Ensure selected Pokémon is included
-        while (randomNames.size() < 4) 
-        {
+        while (randomNames.size() < 4) {
             String randomName = PokemonGame.getRandomPokemon(pokemonList).getName();
             randomNames.add(randomName);
         }
-    
+
         // Convert the set to a list so we can shuffle it
         List<String> shuffledNames = new ArrayList<>(randomNames);
-    
+
         // Shuffle the list of names to randomize their order
         Collections.shuffle(shuffledNames);
-    
-        // Create rectangles with names
-        for (String name : shuffledNames) 
-        {
+
+        // Create rectangles with names and track the index of the correct Pokémon
+        int correctIndex = shuffledNames.indexOf(selectedPokemon.getName()); // Get index of correct Pokémon
+        List<StackPane> blocks = new ArrayList<>();
+        
+        for (int i = 0; i < shuffledNames.size(); i++) {
             StackPane block = new StackPane();
             Rectangle rectangle = new Rectangle(150, 100); // Dimensions of each rectangle
             rectangle.setFill(Color.LIGHTGRAY);
             rectangle.setArcWidth(20);
             rectangle.setArcHeight(20);
-    
-            Text text = new Text(name);
+
+            Text text = new Text(shuffledNames.get(i));
             text.setFont(Font.font("Arial", FontWeight.BOLD, 14));
             text.setFill(Color.BLACK);
-    
-            block.getChildren().addAll(rectangle, text);
-            rectanglesContainer.getChildren().add(block);
-        }
-    }
 
+            block.getChildren().addAll(rectangle, text);
+            blocks.add(block); // Store the blocks in the list
+
+            rectanglesContainer.getChildren().add(block); // Add block to the HBox
+        }
+              
+    }
+    
     private void updatePokemonNameRectangles(List<Pokemon> pokemonList, Pokemon selectedPokemon, HBox rectanglesContainer) 
     {
         // Clear existing rectangles (if needed)
@@ -530,7 +532,103 @@ public class GameUI extends Application
             rectanglesContainer.getChildren().add(block);
         }
     }
+    
+        // Separate method to highlight the selected box
+    private void highlightBox(int selectedIndex, List<StackPane> blocks, int correctIndex) 
+    {
+        for (int i = 0; i < blocks.size(); i++) 
+        {
+            StackPane block = blocks.get(i);
+            Rectangle rectangle = (Rectangle) block.getChildren().get(0); // Get the rectangle inside the block
+            
+            if (i == correctIndex) 
+            {
+                // Correct box
+                rectangle.setFill(Color.GREEN);
+            } else if (i == selectedIndex) 
+            {
+                // Highlight the selected (wrong) box in dark red
+                rectangle.setFill(Color.DARKRED);
+            } else 
+            {
+                // Incorrect box
+                rectangle.setFill(Color.RED);
+            }
+        }
+    
+        // Display result based on selected box
+        if (selectedIndex == correctIndex) 
+        {
+            displayResult("Correct!");
+        } else 
+        {
+            displayResult("Wrong!");
+        }
+    }
 
+
+    // Separate method to display result message
+    private void displayResult(String resultMessage) 
+    {
+        // Check if the result text already exists
+        StackPane existingResultPane = null;
+        
+        // Iterate through the children to find an existing result message
+        for (Node node : root.getChildren()) 
+        {
+            if (node instanceof StackPane) 
+            {
+                StackPane pane = (StackPane) node;
+                if (pane.getChildren().get(0) instanceof Text) 
+                {
+                    Text existingText = (Text) pane.getChildren().get(0);
+                    if (existingText.getText() != null && !existingText.getText().isEmpty()) 
+                    {
+                        existingResultPane = pane; // Found the existing result
+                        break;
+                    }
+                }
+            }
+        }
+    
+        // If an existing result message is found, update it; otherwise, create a new one
+        if (existingResultPane != null) 
+        {
+            // Update the text of the existing result message
+            Text existingText = (Text) existingResultPane.getChildren().get(0);
+            existingText.setText(resultMessage);
+            // Set the text color based on the result message
+            existingText.setFill(resultMessage.equals("Correct!") ? Color.GREEN : Color.RED);
+            existingResultPane.setVisible(true); // Ensure it's visible
+        } 
+        else 
+        {
+            // Create the result message text
+            Text resultText = new Text(resultMessage);
+            resultText.setFont(Font.font("Arial", FontWeight.BOLD, 36)); // Larger font size
+            // Set the text color based on the result message
+            resultText.setFill(resultMessage.equals("Correct!") ? Color.GREEN : Color.RED);
+    
+            // Create a StackPane for the result text
+            StackPane resultPane = new StackPane();
+            resultPane.getChildren().add(resultText);
+    
+            // Add the resultPane to the root layout
+            root.getChildren().add(resultPane);
+    
+            // Create a PauseTransition to delay hiding the result
+            PauseTransition pause = new PauseTransition(Duration.seconds(7));
+    
+            // After 5 seconds, hide the resultPane
+            pause.setOnFinished(event -> resultPane.setVisible(false));
+    
+            // Start the pause transition
+            pause.play();
+        }
+    }
+
+
+    
     private void displayPokemonInfo(Pokemon selectedPokemon, StackPane root)    
     {
         VBox pokemonInfoBox = new VBox();
